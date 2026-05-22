@@ -1,17 +1,24 @@
 ---
 context: notification-service
 bounded-context: Notification
+tier: A
 ---
 
 # Notification Service — Use Case спецификация (Tier A)
 
-Tier A: слоёная архитектура (Controller → Service → Repository) без UseCase Pattern и DDD. **Агрегатов нет** (anemic, CRUD-сервис) — вся спека в одном файле, контекст- и модуль-секции идут единой сквозной нумерацией; §Доменные события (публикация) и §Процессы помечены «не применимо». Задача сервиса — взять входящее событие Order, отрендерить шаблон, отправить во внешний канал, записать результат.
+Tier A: слоёная архитектура (Controller → Service → Repository) без UseCase Pattern и DDD. **Агрегатов нет** (anemic, CRUD-сервис). Домен-юнит — сущность **Notification** — в [`aggregates/notification.md`](aggregates/notification.md); этот файл — секции контекста. §Доменные события (публикация) и §Процессы — «не применимо». Задача сервиса — взять входящее событие Order, отрендерить шаблон, отправить во внешний канал, записать результат.
 
 ---
 
 ## 1. Bounded Context
 
 **Контекст:** Notification (на Tier A — **модуль**, не отдельная предметная область). **Субдомен:** Generic. **Владелец:** команда «Платформа». Агрегатов нет.
+
+### Домен-юниты
+
+| Юнит | Назначение | Файл |
+|---|---|---|
+| `Notification` (сущность) | запись журнала доставки: событие → канал → адресат, со статусом | [`aggregates/notification.md`](aggregates/notification.md) |
 
 **Внутри границы:** подписка на доменные события Order; выбор каналов по типу события; рендер шаблона и отправка через SMTP + FCM; журнал попыток; ретраи при временных ошибках; приём webhook'ов о доставке; админ-журнал и ручной retry.
 
@@ -66,135 +73,32 @@ Notification — **Conformist** к контрактам Order и Customer BFF: �
 | Адресат | `Recipient` | `userId` + материализованный контакт на момент отправки. |
 | Шаблон | `Template` | Сообщение в БД: ключ + язык + субъект и тело с `${var}`. |
 | Исходное событие | `SourceEvent` | Входящее Kafka-событие (JSON хранится для дебага/retry). |
-| Статус доставки | `DeliveryStatus` | `QUEUED`/`SENT`/`DELIVERED`/`BOUNCED`/`FAILED` (§5). |
+| Статус доставки | `DeliveryStatus` | `QUEUED`/`SENT`/`DELIVERED`/`BOUNCED`/`FAILED`. |
 
 Намеренно нет агрегатов, value objects, доменных событий — `Notification` это строка в таблице.
 
 ---
 
-## 4. Доменная модель
-
-Tier A — модель = **таблицы** (агрегатов/VO нет; проектное решение). Контроллер/сервис принимают JSON-DTO напрямую.
-
-| Таблица | Роль |
-|---|---|
-| `notifications` | главная: строка = попытка доставки в один канал; копия контакта и шаблонных переменных на момент отправки |
-| `templates` | шаблоны (`<event>.<channel>` × locale): субъект + тело с `${var}` |
-| `delivery_attempts` | лог каждой попытки (изолирован от `notifications` — запросы по статусу по индексу) |
-| `processed_events` | идемпотентность консьюмера (PK по `event_id`) |
-
-Схема (ER, типы, индексы) — §Техническая реализация.
-
----
-
-## 5. Жизненный цикл уведомления
-
-| Статус | Описание |
-|---|---|
-| `QUEUED` | создано из события, ждёт отправки |
-| `SENT` | ушло в провайдер |
-| `DELIVERED` | webhook `delivered` (только email) |
-| `BOUNCED` | webhook `bounced` |
-| `FAILED` | ретраи исчерпаны / permanent error |
-
-```mermaid
-stateDiagram-v2
-    [*] --> QUEUED: создано из события
-    QUEUED --> SENT: ушло в провайдер
-    QUEUED --> FAILED: 3 ретрая исчерпаны
-    SENT --> DELIVERED: webhook delivered (email)
-    SENT --> BOUNCED: webhook bounced
-    FAILED --> QUEUED: ручной retry оператора
-    BOUNCED --> [*]
-    DELIVERED --> [*]
-    FAILED --> [*]: оператор пометил «безнадёжно»
-```
-
-Терминальные: `DELIVERED`, `BOUNCED`, `FAILED` (после ручной отметки). PUSH без webhook → остаётся `SENT` (`BR-N7`). Ручной retry — только из `FAILED`.
-
----
-
-## 6. Роли и доступ
+## 4. Роли и доступ
 
 | Роль | Кто |
 |---|---|
 | `support-operator` | оператор поддержки (Keycloak) |
 | `system` | SMTP-провайдер (webhook, HMAC), Customer BFF (s2s) |
 
-| Операция | support-operator | system |
-|---|---|---|
-| `GET /notifications`, `/{id}` | ✅ | — |
-| `POST /{id}/retry`, `/{id}/abandon` | ✅ | — |
-| `POST /webhooks/email-events` | — | ✅ (HMAC) |
-
-ABAC отсутствует — оператор видит все уведомления. Покупатели прямого доступа не имеют (inbox — через Customer BFF, s2s).
+ABAC отсутствует — оператор видит все уведомления. Покупатели прямого доступа не имеют (inbox — через Customer BFF, s2s). Доступ по операциям — [`aggregates/notification.md` → Доступ](aggregates/notification.md#3-доступ).
 
 **PII:** email/push-токен — шифрование хранения; в логах маскируются; TTL 90 дней (`BR-N8`).
 
 ---
 
-## 7. Бизнес-правила
+## 5. Доменные события
 
-- **`BR-N1`** — *инвариант.* Идемпотентность по `event_id` (`processed_events`, `INSERT … ON CONFLICT DO NOTHING`).
-- **`BR-N2`** — *политика.* Каналы по типу события (таблица в коде): `OrderConfirmed`/`OrderPaid`/`OrderShipped`/`OrderCancelled`/`OrderRefunded`/`DisputeResolved` → email+push; `OrderDelivered` → email; `DisputeOpened` → push продавцу + email оператору.
-- **`BR-N3`** — *инвариант.* Нет шаблона для `(event, channel, locale)` → уведомление не создаётся + `notification_template_missing_total`.
-- **`BR-N4`** — *инвариант.* Контакт материализуется на момент отправки.
-- **`BR-N5`** — *политика.* Retry 3 попытки (30s/5min/30min) при `TRANSIENT_ERROR`; `PERMANENT_ERROR` → сразу `FAILED`.
-- **`BR-N6`** — *инвариант.* Дедупликация webhook по `(notification_id, webhook_event_id)`.
-- **`BR-N7`** — *инвариант.* PUSH без подтверждения: 200 от FCM → `SENT`, не переходит в `DELIVERED`.
-- **`BR-N8`** — *политика.* TTL журнала 90 дней (152-ФЗ/GDPR).
-- **`BR-N9`** — *политика.* ≤ 100 писем/сек на провайдера (token bucket).
+**Не применимо на Tier A.** Сервис событий не публикует — только потребляет события Order (см. §Интеграции).
 
 ---
 
-## 8. Команды (операции)
-
-Tier A — операции сервиса/шедулеров, не `UseCase`-классы.
-
-### `ProcessOrderEvent`
-- **Триггер:** Kafka `marketplace.orders.v1` · **Предусловия:** `BR-N1`, `BR-N3`
-- **Логика:** проверить `event_id`; запросить контакт у Customer BFF; по таблице каналов (`BR-N2`) создать записи `QUEUED`.
-- **Ошибки:** `CONTACT_LOOKUP_FAILED` (→ `FAILED` после ретраев), `TEMPLATE_MISSING` (не создаётся)
-
-### `DispatchPending`
-- **Триггер:** шедулер (1с) · **Логика:** взять `QUEUED` (≤100), отрендерить, отправить, обновить статус; при ошибке — `delivery_attempts` + retry (`BR-N5`).
-
-### `ProcessEmailWebhook`
-- **Триггер:** webhook Mailgun · **Предусловия:** HMAC (`BR-N6`) · **Логика:** по `external_id` → `DELIVERED`/`BOUNCED`.
-- **Ошибки:** `WEBHOOK_SIGNATURE_INVALID`
-
-### `RetryNotification`
-- **Актор:** support-operator · **Переход:** `FAILED` → `QUEUED` · **Ошибки:** `NOTIFICATION_NOT_FOUND`, `INVALID_STATUS_FOR_RETRY`
-
-### `AbandonNotification`
-- **Актор:** support-operator · **Переход:** `FAILED` → `FAILED` (финальный, без retry)
-
-### `PurgeOldRecords`
-- **Триггер:** шедулер (ежедневно) · **Логика:** удалить записи старше 90 дней (`BR-N8`).
-
----
-
-## 9. Доменные события
-
-**Не применимо на Tier A.** Сервис событий не публикует — только потребляет события Order (§Интеграции).
-
----
-
-## 10. Запросы
-
-### `SearchNotifications`
-- **Актор:** support-operator · **Параметры:** `userId?`, `status?`, `eventType?`, `channel?`, период, пагинация
-- **Возвращает:** страницу уведомлений · **Логика:** SELECT поверх `notifications` (Read Model на Tier A нет).
-
-### `GetNotification`
-- **Актор:** support-operator · **Параметры:** `id` · **Возвращает:** запись + `delivery_attempts`.
-
-### `GetUserInbox`
-- **Актор:** Customer BFF (s2s) · **Параметры:** `userId`, пагинация · **Возвращает:** уведомления пользователя по дате.
-
----
-
-## 11. Use Cases
+## 6. Use Cases
 
 **UC-N1 Подтверждение заказа → email + push.** `OrderConfirmed` → проверка `event_id` → контакт у BFF → две записи `QUEUED` (`BR-N2`) → отправка → email `SENT` → webhook → `DELIVERED`; push `SENT`.
 
@@ -206,13 +110,13 @@ Tier A — операции сервиса/шедулеров, не `UseCase`-к
 
 ---
 
-## 12. Процессы
+## 7. Процессы
 
-**Не применимо на Tier A.** Межагрегатных/межсервисных процессов нет — каждое событие обрабатывается независимо.
+**Не применимо на Tier A.** Межсервисных процессов (Saga) нет — каждое событие обрабатывается независимо.
 
 ---
 
-## 13. UI-спецификация
+## 8. UI-спецификация
 
 Один интерфейс — админ-журнал для `support-operator` (пользователи inbox видят через Customer BFF).
 
@@ -226,7 +130,7 @@ Tier A — операции сервиса/шедулеров, не `UseCase`-к
 
 ---
 
-## 14. Критерии приёмки (Given / When / Then)
+## 9. Критерии приёмки (Given / When / Then)
 
 - **Given** событие Order из таблицы каналов · **When** консьюмер получил · **Then** записи в правильных каналах (`BR-N2`).
 - **Given** обработанное событие · **When** Kafka доставляет дубль · **Then** второе не создаётся (`BR-N1`).
@@ -239,7 +143,7 @@ Tier A — операции сервиса/шедулеров, не `UseCase`-к
 
 ---
 
-## 15. Нефункциональные требования
+## 10. Нефункциональные требования
 
 | Аспект | Требование |
 |---|---|
@@ -251,7 +155,7 @@ Tier A — операции сервиса/шедулеров, не `UseCase`-к
 
 ---
 
-## 16. Техническая реализация
+## 11. Техническая реализация
 
 `java-21` · `spring-boot-3` · `spring-kafka` (консьюмер) · `spring-web` (webhook + admin) · `spring-security` (OAuth2 + HMAC-фильтр) · `postgresql-16` + `jooq` + `flyway` · Mailgun/FCM (REST) · `resilience4j` (CB/retry для BFF) · Micrometer/Prometheus · OpenTelemetry · JUnit5 + WireMock.
 
