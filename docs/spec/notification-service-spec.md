@@ -1,18 +1,18 @@
 ---
 context: notification-service
 bounded-context: Notification
-tier: A
+level: 1
 ---
 
-# Notification Service — Use Case спецификация (Tier A)
+# Notification Service — Use Case спецификация (Уровень 1)
 
-Tier A: слоёная архитектура (Controller → Service → Repository) без UseCase Pattern и DDD. **Агрегатов нет** (anemic, CRUD-сервис). Домен-юнит — сущность **Notification** — в [`aggregates/notification.md`](aggregates/notification.md); этот файл — секции контекста. §Доменные события (публикация) и §Процессы — «не применимо». Задача сервиса — взять входящее событие Order, отрендерить шаблон, отправить во внешний канал, записать результат.
+Уровень 1: слоёная архитектура (Controller → Service → Repository) без UseCase Pattern и DDD. **Агрегатов нет** (anemic, CRUD-сервис). Домен-юнит — сущность **Notification** — в [`aggregates/notification.md`](aggregates/notification.md); этот файл — секции контекста. §Доменные события (публикация) и §Процессы — «не применимо». Задача сервиса — взять входящее событие Order, отрендерить шаблон, отправить во внешний канал, записать результат.
 
 ---
 
 ## 1. Bounded Context
 
-**Контекст:** Notification (на Tier A — **модуль**, не отдельная предметная область). **Субдомен:** Generic. **Владелец:** команда «Платформа». Агрегатов нет.
+**Контекст:** Notification (на Уровне 1 — **модуль**, не отдельная предметная область). **Субдомен:** Generic. **Владелец:** команда «Платформа». Агрегатов нет.
 
 ### Домен-юниты
 
@@ -22,7 +22,7 @@ Tier A: слоёная архитектура (Controller → Service → Reposi
 
 **Внутри границы:** подписка на доменные события Order; выбор каналов по типу события; рендер шаблона и отправка через SMTP + FCM; журнал попыток; ретраи при временных ошибках; приём webhook'ов о доставке; админ-журнал и ручной retry.
 
-**Вне границы:** бизнес-логика маркетплейса (правила «когда слать» — в источнике события); настройки подписок/опт-ауты (Tier B); кампании/массовые рассылки (отдельный сервис — здесь только транзакционные); токены устройств (берёт у Customer BFF); тело письма после отправки (только метаданные).
+**Вне границы:** бизнес-логика маркетплейса (правила «когда слать» — в источнике события); настройки подписок/опт-ауты (Уровень 2); кампании/массовые рассылки (отдельный сервис — здесь только транзакционные); токены устройств (берёт у Customer BFF); тело письма после отправки (только метаданные).
 
 ---
 
@@ -52,7 +52,7 @@ flowchart LR
 | FCM (Firebase) | outbound | sync | внешний | push (fire-and-forget) |
 | Admin UI | inbound | sync | customer-supplier | журнал, ручной retry |
 
-Notification — **Conformist** к контрактам Order и Customer BFF: подстраивается, не диктует. ACL на Tier A избыточен.
+Notification — **Conformist** к контрактам Order и Customer BFF: подстраивается, не диктует. ACL на Уровне 1 избыточен.
 
 ### Контракты
 
@@ -94,7 +94,7 @@ ABAC отсутствует — оператор видит все уведом�
 
 ## 5. Доменные события
 
-**Не применимо на Tier A.** Сервис событий не публикует — только потребляет события Order (см. §Интеграции).
+**Не применимо на Уровне 1.** Сервис событий не публикует — только потребляет события Order (см. §Интеграции).
 
 ---
 
@@ -112,7 +112,7 @@ ABAC отсутствует — оператор видит все уведом�
 
 ## 7. Процессы
 
-**Не применимо на Tier A.** Межсервисных процессов (Saga) нет — каждое событие обрабатывается независимо.
+**Не применимо на Уровне 1.** Межсервисных процессов (Saga) нет — каждое событие обрабатывается независимо.
 
 ---
 
@@ -159,7 +159,7 @@ ABAC отсутствует — оператор видит все уведом�
 
 `java-21` · `spring-boot-3` · `spring-kafka` (консьюмер) · `spring-web` (webhook + admin) · `spring-security` (OAuth2 + HMAC-фильтр) · `postgresql-16` + `jooq` + `flyway` · Mailgun/FCM (REST) · `resilience4j` (CB/retry для BFF) · Micrometer/Prometheus · OpenTelemetry · JUnit5 + WireMock.
 
-**Persistence — только jOOQ, только сгенерированные классы** (`BS-17`, на любом Tier). Postgres ENUM-типы (`notification_channel`/`notification_status`/`delivery_attempt_result`) → jOOQ генерит Java-enum. Tier A — про отсутствие DDD/UseCase Pattern, не про упрощение persistence.
+**Persistence — только jOOQ, только сгенерированные классы** (`BS-17`, на любом уровне). Postgres ENUM-типы (`notification_channel`/`notification_status`/`delivery_attempt_result`) → jOOQ генерит Java-enum. Уровень 1 — про отсутствие DDD/UseCase Pattern, не про упрощение persistence.
 
 ### Схема БД
 
@@ -207,4 +207,4 @@ erDiagram
 
 **API-контракт ошибок** — RFC 9457 ProblemDetails: `NOTIFICATION_NOT_FOUND` (404), `INVALID_STATUS_FOR_RETRY` (409), `WEBHOOK_SIGNATURE_INVALID` (401). Внутренние (`TEMPLATE_MISSING`, `CONTACT_LOOKUP_FAILED`, `PROVIDER_UNAVAILABLE`) наружу не светят — пишутся в `last_error`.
 
-**Расширения (Tier B/C):** подписки/опт-ауты, A/B-тексты, WebPush, кампании (отдельный сервис), динамический выбор каналов через админку.
+**Расширения (Уровень 2/3):** подписки/опт-ауты, A/B-тексты, WebPush, кампании (отдельный сервис), динамический выбор каналов через админку.
