@@ -1,0 +1,94 @@
+spring:
+  application:
+    name: backoffice
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/backoffice}
+    username: ${DB_USER:backoffice}
+    password: ${DB_PASSWORD:backoffice}
+    hikari:
+      maximum-pool-size: 10
+  jooq:
+    sql-dialect: POSTGRES
+  jackson:
+    default-property-inclusion: non_null
+  liquibase:
+    change-log: classpath:db/changelog-master.yaml
+    contexts: production
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${IDP_JWK_SET_URI:https://idp.example.com/realms/backoffice/protocol/openid-connect/certs}
+          issuer-uri: ${IDP_ISSUER_URI:https://idp.example.com/realms/backoffice}
+
+server:
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  health:
+    catalog:
+      enabled: true
+
+# Outbound HTTP-клиент к Catalog Service. См. resilience-style-guide и Backoffice spec §11.
+client:
+  catalog:
+    base-url: ${CATALOG_BASE_URL:http://localhost:8081}
+    connect-timeout: 2s
+    read-timeout: 3s
+    call-timeout: 6s
+    max-concurrent: 20
+    # Admin-токен для вызова Catalog от имени Backoffice (модераторские операции).
+    # Финальный token-provider (rotation / Vault) добавляется на шаге ucp-auth-design.
+    admin-token: ${CATALOG_ADMIN_TOKEN:dev-admin-token-placeholder}
+
+# Resilience4j: per-system isolation для Catalog (instance name = "catalog", R-RES-ISO-3).
+# Retry — только на @CB методах с @Retry (getProduct); hideProduct без Retry (R-RES-RE-X1, write без Idempotency-Key).
+resilience4j:
+  circuitbreaker:
+    instances:
+      catalog:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 20
+        minimumNumberOfCalls: 10
+        failureRateThreshold: 50
+        slowCallRateThreshold: 100
+        slowCallDurationThreshold: 1500ms
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+  bulkhead:
+    instances:
+      catalog:
+        maxConcurrentCalls: 16
+        maxWaitDuration: 100ms
+  retry:
+    instances:
+      catalog:
+        maxAttempts: 3
+        waitDuration: 200ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2.0
+        retryExceptions:
+          - java.io.IOException
+          - org.springframework.web.client.HttpServerErrorException
+          - org.springframework.web.client.ResourceAccessException
+        ignoreExceptions:
+          - org.springframework.web.client.HttpClientErrorException
+          - ru.remodov.backoffice.catalog.exception.CatalogClientException
+  timelimiter:
+    instances:
+      catalog:
+        timeoutDuration: 3s
+
+logging:
+  level:
+    root: INFO
+    ru.remodov.backoffice: DEBUG

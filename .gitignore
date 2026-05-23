@@ -1,3 +1,26 @@
+.gradle/
+/build/
+/out/
+**/build/
+**/generated/
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local secrets
+.env
+.env.local
+
 # BEGIN ucp-skills (managed by claude-code-java/install.sh)
 # Папки .claude/docs/, .claude/agents/, .claude/hooks/ принадлежат install.sh
 # целиком — свои файлы туда не клади (.claude/skills/ остаётся открытым для

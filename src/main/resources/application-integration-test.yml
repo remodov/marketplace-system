@@ -1,0 +1,27 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/backoffice
+    username: backoffice
+    password: backoffice
+  jpa:
+    open-in-view: false
+  liquibase:
+    contexts: production
+  kafka:
+    listener:
+      auto-startup: false
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration
+
+# WireMock-стаб Catalog на фиксированном порту — поднимается @SpringBootTest'ом.
+client:
+  catalog:
+    base-url: http://localhost:9561
+    admin-token: test-admin-token
+
+logging:
+  level:
+    org.jooq: WARN
+    org.springframework.security: TRACE
+    org.springframework.security.web: TRACE

@@ -1,0 +1,87 @@
+databaseChangeLog:
+  - changeSet:
+      id: v-1.0-create-moderation-actions-table
+      author: backoffice-team
+      context: production
+      changes:
+        - createTable:
+            tableName: moderation_actions
+            remarks: 'Иммутабельная запись о решении модератора скрыть товар. См. docs/spec/aggregates/moderation-action.md.'
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: product_id
+                  type: uuid
+                  constraints: { nullable: false }
+                  remarks: 'Логическая ссылка на Catalog.products.id, без FK (cross-context).'
+              - column:
+                  name: moderator_id
+                  type: uuid
+                  constraints: { nullable: false }
+                  remarks: 'sub из JWT модератора.'
+              - column:
+                  name: reason
+                  type: moderation_reason
+                  constraints: { nullable: false }
+              - column:
+                  name: note
+                  type: text
+              - column:
+                  name: decided_at
+                  type: timestamptz
+                  constraints: { nullable: false }
+                  defaultValueComputed: now()
+              - column:
+                  name: request_id
+                  type: uuid
+                  constraints: { nullable: false, unique: true, uniqueConstraintName: uk_moderation_actions_request_id }
+                  remarks: 'Client-supplied Idempotency-Key команды HideProductByModeration.'
+        - sql:
+            sql: "ALTER TABLE moderation_actions ADD CONSTRAINT moderation_actions_note_length CHECK (note IS NULL OR length(note) <= 1000)"
+            rollback: "ALTER TABLE moderation_actions DROP CONSTRAINT moderation_actions_note_length"
+        - createIndex:
+            tableName: moderation_actions
+            indexName: idx_moderation_actions_moderator_decided
+            columns:
+              - column: { name: moderator_id }
+              - column: { name: decided_at, descending: true }
+        - createIndex:
+            tableName: moderation_actions
+            indexName: idx_moderation_actions_decided_at
+            columns:
+              - column: { name: decided_at, descending: true }
+
+  - changeSet:
+      id: v-1.0-create-idempotency-records-table
+      author: backoffice-team
+      context: production
+      changes:
+        - createTable:
+            tableName: idempotency_records
+            remarks: 'Кеш ответов write-команд по Idempotency-Key (TTL 24h, чистится отдельной job). См. §11 спеки.'
+            columns:
+              - column:
+                  name: request_id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: response_hash
+                  type: text
+                  constraints: { nullable: false }
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  constraints: { nullable: false }
+                  defaultValueComputed: now()
+        - createIndex:
+            tableName: idempotency_records
+            indexName: idx_idempotency_records_created_at
+            columns:
+              - column: { name: created_at }

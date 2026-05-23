@@ -1,0 +1,474 @@
+openapi: 3.0.3
+info:
+  title: Catalog Service API
+  description: |
+    REST API сервиса Catalog (Tier B). Покрывает спеку `docs/spec/catalog-service.md`.
+    Ошибки — RFC 9457 ProblemDetails (`application/problem+json`).
+  version: 1.0.0
+  contact:
+    name: catalog-team
+
+servers:
+  - url: https://catalog.example.com
+    description: Production
+  - url: http://localhost:8080
+    description: Local
+
+tags:
+  - name: Products
+    description: Управление карточками товаров, публичный read и личный кабинет продавца
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/v1/products:
+    post:
+      tags: [Products]
+      operationId: createProduct
+      summary: Создать карточку товара (DRAFT)
+      description: |
+        Создаёт продукт в статусе `DRAFT` от имени текущего seller'а (sellerId берётся из JWT.sub).
+        BR-P01 (price > 0), BR-P02 (currency=RUB), BR-P03 (server-generated UUID).
+      security:
+        - bearerAuth: [seller]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProductRequest'
+      responses:
+        '201':
+          description: Created
+          headers:
+            Location:
+              description: URI созданного ресурса
+              schema:
+                type: string
+                format: uri
+                example: /api/v1/products/3fa85f64-5717-4562-b3fc-2c963f66afa6
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+
+  /api/v1/products/{productId}:
+    parameters:
+      - $ref: '#/components/parameters/ProductId'
+    get:
+      tags: [Products]
+      operationId: getProduct
+      summary: Получить продукт по ID
+      description: |
+        Публичный read. Возвращает 200 только для `PUBLISHED` (BR-P06).
+        Для `DRAFT|HIDDEN` — 404 `PRODUCT_NOT_FOUND` (используется Order Service'ом для расчёта заказа).
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDto'
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+
+  /api/v1/products/{productId}/publish:
+    parameters:
+      - $ref: '#/components/parameters/ProductId'
+    post:
+      tags: [Products]
+      operationId: publishProduct
+      summary: Опубликовать продукт
+      description: |
+        Action-эндпоинт. Переводит `DRAFT|HIDDEN → PUBLISHED` (BR-P05).
+        ABAC: только владелец (BR-P04); чужой → 404 `OWN_PRODUCT_REQUIRED`.
+      security:
+        - bearerAuth: [seller]
+      responses:
+        '200':
+          description: Published
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+
+  /api/v1/products/{productId}/hide:
+    parameters:
+      - $ref: '#/components/parameters/ProductId'
+    post:
+      tags: [Products]
+      operationId: hideProduct
+      summary: Скрыть продукт
+      description: |
+        Action-эндпоинт. Переводит `PUBLISHED → HIDDEN` (BR-P05).
+        ABAC: только владелец (BR-P04); чужой → 404 `OWN_PRODUCT_REQUIRED`.
+      security:
+        - bearerAuth: [seller]
+      responses:
+        '200':
+          description: Hidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDto'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+
+  /api/v1/products/my:
+    get:
+      tags: [Products]
+      operationId: listMyProducts
+      summary: Мои продукты (для текущего seller'а)
+      description: |
+        Логический alias-сегмент `my` (см. §6 style guide) — возвращает продукты,
+        принадлежащие seller'у из JWT, любых статусов.
+      security:
+        - bearerAuth: [seller]
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/ProductStatus'
+          description: Фильтр по статусу
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            example: createdAt,desc
+          description: Поле сортировки + направление, через запятую
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductPageDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Keycloak OAuth2; роли в `realm_access.roles`
+
+  parameters:
+    ProductId:
+      name: productId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Идентификатор продукта
+
+  schemas:
+    CreateProductRequest:
+      type: object
+      required: [title, price, currency]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: 'iPhone 15 Pro 256GB'
+        description:
+          type: string
+          maxLength: 4000
+          example: 'Б/у, состояние идеальное, в комплекте чехол'
+        price:
+          type: number
+          format: decimal
+          minimum: 0
+          exclusiveMinimum: true
+          example: 89990.00
+        currency:
+          type: string
+          enum: [RUB]
+          example: RUB
+
+    ProductDto:
+      type: object
+      required: [id, title, price, currency, sellerId, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: decimal
+        currency:
+          type: string
+          enum: [RUB]
+        sellerId:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/ProductStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ProductStatus:
+      type: string
+      enum: [DRAFT, PUBLISHED, HIDDEN]
+
+    ProductPageDto:
+      type: object
+      required: [content, page, size, totalElements, totalPages]
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductDto'
+        page:
+          type: integer
+          example: 1
+        size:
+          type: integer
+          example: 20
+        totalElements:
+          type: integer
+          format: int64
+          example: 137
+        totalPages:
+          type: integer
+          example: 7
+
+    ErrorCode:
+      type: string
+      description: Символьный код ошибки
+      enum:
+        - VALIDATION_ERROR
+        - MALFORMED_REQUEST
+        - TOKEN_MISSING
+        - TOKEN_EXPIRED
+        - ACCESS_DENIED
+        - PRODUCT_NOT_FOUND
+        - OWN_PRODUCT_REQUIRED
+        - INVALID_STATE_TRANSITION
+        - INVALID_PRICE
+        - INVALID_CURRENCY
+        - INTERNAL_SERVER_ERROR
+
+    ProblemDetails:
+      type: object
+      description: Problem Details (RFC 9457)
+      required: [type, status, title, detail, code]
+      properties:
+        type:
+          type: string
+          format: uri
+        status:
+          type: integer
+          format: int32
+        title:
+          type: string
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri
+        traceId:
+          type: string
+        code:
+          $ref: '#/components/schemas/ErrorCode'
+        violations:
+          type: array
+          description: Присутствует только при code=VALIDATION_ERROR
+          items:
+            $ref: '#/components/schemas/Violation'
+
+    Violation:
+      type: object
+      required: [message]
+      properties:
+        field:
+          type: string
+          example: price
+        message:
+          type: string
+          example: 'Цена должна быть больше 0'
+
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            validation:
+              summary: Ошибка валидации полей
+              value:
+                type: 'about:blank'
+                status: 400
+                title: 'Bad Request'
+                detail: 'Ошибка валидации входных данных'
+                code: VALIDATION_ERROR
+                violations:
+                  - field: title
+                    message: 'Название обязательно'
+                  - field: price
+                    message: 'Цена должна быть больше 0'
+            malformed:
+              summary: Некорректный JSON
+              value:
+                type: 'about:blank'
+                status: 400
+                title: 'Bad Request'
+                detail: 'Невозможно разобрать тело запроса'
+                code: MALFORMED_REQUEST
+            invalidPrice:
+              summary: Цена ≤ 0 (BR-P01)
+              value:
+                type: 'about:blank'
+                status: 400
+                title: 'Bad Request'
+                detail: 'Цена должна быть больше нуля'
+                code: INVALID_PRICE
+            invalidCurrency:
+              summary: Валюта не RUB (BR-P02)
+              value:
+                type: 'about:blank'
+                status: 400
+                title: 'Bad Request'
+                detail: 'Поддерживается только валюта RUB'
+                code: INVALID_CURRENCY
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            missing:
+              summary: Токен отсутствует
+              value:
+                type: 'about:blank'
+                status: 401
+                title: 'Unauthorized'
+                detail: 'Заголовок Authorization отсутствует'
+                code: TOKEN_MISSING
+            expired:
+              summary: Токен истёк
+              value:
+                type: 'about:blank'
+                status: 401
+                title: 'Unauthorized'
+                detail: 'Токен доступа истёк. Получите новый токен.'
+                code: TOKEN_EXPIRED
+
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            forbidden:
+              summary: Нет прав
+              value:
+                type: 'about:blank'
+                status: 403
+                title: 'Forbidden'
+                detail: 'Недостаточно прав для выполнения операции'
+                code: ACCESS_DENIED
+
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            notFound:
+              summary: Продукт не найден или не PUBLISHED (BR-P06)
+              value:
+                type: 'about:blank'
+                status: 404
+                title: 'Not Found'
+                detail: 'Продукт не найден'
+                code: PRODUCT_NOT_FOUND
+            ownProductRequired:
+              summary: Чужой продукт (BR-P04) — намеренно 404, не 403
+              value:
+                type: 'about:blank'
+                status: 404
+                title: 'Not Found'
+                detail: 'Продукт не найден'
+                code: OWN_PRODUCT_REQUIRED
+
+    Conflict:
+      description: Conflict
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            invalidStateTransition:
+              summary: Недопустимый переход статуса (BR-P05)
+              value:
+                type: 'about:blank'
+                status: 409
+                title: 'Conflict'
+                detail: 'Нельзя опубликовать продукт в статусе PUBLISHED'
+                code: INVALID_STATE_TRANSITION
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            internalError:
+              value:
+                type: 'urn:problem:catalog:INTERNAL_SERVER_ERROR'
+                title: Internal Server Error
+                status: 500
+                detail: Внутренняя ошибка сервера
+                code: INTERNAL_SERVER_ERROR

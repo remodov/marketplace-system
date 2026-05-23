@@ -1,3 +1,85 @@
+# Backoffice service
+
+Operator Backoffice маркетплейс-кейса. Уровень зрелости — **2** (UseCase + Handler
+с CQRS-маркерами, без DDD/Hexagonal). Источник правды по сервису —
+[`docs/spec/backoffice-spec.md`](docs/spec/backoffice-spec.md) и
+[`docs/spec/aggregates/moderation-action.md`](docs/spec/aggregates/moderation-action.md).
+
+## Стек
+
+Java 21, Spring Boot 3.4.2, single-module Gradle (Kotlin DSL), `ru.remodov.backoffice.*`.
+Persistence — **только jOOQ, только generated** из applied Liquibase-схемы (BS-17/18).
+REST — OpenAPI-generator (server-stubs); исходящий клиент к Catalog —
+spring-restclient (добавляется скиллом `ucp-integration-design`). Resilience4j
+для Circuit Breaker / Retry / TimeLimiter на Catalog-вызовах.
+
+## Quickstart
+
+```bash
+docker compose up -d postgres
+./gradlew regenerate        # liquibase update + jOOQ codegen
+./gradlew bootRun --args='--spring.profiles.active=local'
+# → Tomcat started on port 8080
+```
+
+## Тесты
+
+```bash
+docker compose up -d postgres     # обязательно — тесты идут на localhost:5433
+./gradlew test
+```
+
+Интеграционные тесты используют существующий PostgreSQL из `docker-compose.yml`
+(не Testcontainers), потому что в Claude-Code-окружении Docker socket возвращает
+ограниченные ответы, и Testcontainers не может сконфигурироваться. На обычной
+dev-машине / в CI можно вернуть `@Testcontainers` с `PostgreSQLContainer` (см.
+git history `BackofficeIntegrationTest.java` — первая итерация).
+
+WireMock крутится на фиксированном порту 9561 (`application-integration-test.yml`).
+
+Профили (BS-2):
+
+| Профиль | Когда | Security | Catalog URL |
+|---|---|---|---|
+| (нет) | production | OAuth2 RS / JWT через Keycloak | `${CATALOG_BASE_URL}` |
+| `local` | `bootRun` локально | `permitAll` | `http://localhost:8081` |
+| `integration-test` | `@SpringBootTest` | `permitAll`, OAuth2 autoconfig excluded | `http://localhost:9561` (WireMock) |
+
+## Регенерация jOOQ после миграций
+
+```bash
+./gradlew update            # liquibase update
+./gradlew generateJooq      # codegen из applied-схемы
+# либо одной командой:
+./gradlew regenerate
+```
+
+Сгенерированные классы (`ru.remodov.backoffice.generated.*`) под `build/generated/`,
+в VCS не уходят. Не редактируй их — будут перезатёрты (BS-19).
+
+## Структура
+
+```
+backoffice/
+├── docs/spec/                   # источник правды (Use Case спека)
+├── migrations/db/changelog/     # Liquibase changesets (BS-10)
+│   └── v-1.0/                   # initial schema + enum types
+├── src/main/java/ru/remodov/backoffice/
+│   ├── BackofficeApplication.java
+│   ├── config/                  # ServiceBeansConfig, Security, Jackson
+│   └── core/service/            # DateTimeService, UuidGenerator (тестируются через @MockitoBean)
+├── src/main/resources/
+│   ├── application.yml          # production-defaults
+│   ├── application-local.yml    # overrides для bootRun
+│   ├── application-integration-test.yml
+│   └── openapi/backoffice.openapi.yaml
+├── build.gradle.kts             # jOOQ codegen + OpenAPI-generator + Resilience4j
+└── docker-compose.yml           # PostgreSQL 16 на 5433
+```
+
+Порт Postgres — **5433** (а не 5432), чтобы можно было одновременно поднимать
+Catalog (5432) и Backoffice локально.
+
 <!-- BEGIN ucp-skills (managed by claude-code-java/install.sh) -->
 ## Use Case Pattern skills
 

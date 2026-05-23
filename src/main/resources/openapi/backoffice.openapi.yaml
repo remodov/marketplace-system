@@ -1,0 +1,343 @@
+openapi: 3.0.3
+info:
+  title: Backoffice API
+  description: |
+    Operator Backoffice API маркетплейс-кейса.
+
+    Источник правды по доменной модели и команды/запросам — `docs/spec/backoffice-spec.md`
+    и `docs/spec/aggregates/moderation-action.md`.
+  version: 0.1.0
+servers:
+  - url: http://localhost:8080
+    description: local dev
+tags:
+  - name: meta
+    description: Сервисные эндпоинты (health/version).
+  - name: moderation-actions
+    description: Решения модератора по карточкам Catalog (UC-B1..UC-B3 спеки).
+paths:
+  /api/v1/_meta:
+    get:
+      tags: [meta]
+      operationId: getServiceMeta
+      summary: Метаданные сервиса (имя, версия).
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceMeta'
+
+  /api/v1/moderation-actions/my:
+    get:
+      tags: [moderation-actions]
+      operationId: listMyModerationActions
+      summary: Моя история действий модерации (UC-B2).
+      description: |
+        Возвращает страницу записей ModerationAction текущего модератора,
+        отсортированных по `decided_at desc`. Видны только записи самого модератора
+        (admin-обход — на эндпоинте UC-B3, отложено).
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Включительная нижняя граница `decided_at`.
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Исключительная верхняя граница `decided_at`.
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: X-Moderator-Id
+          in: header
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Placeholder до `ucp-auth-design` (см. POST /api/v1/moderation-actions).
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationActionPageDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/moderation-actions:
+    get:
+      tags: [moderation-actions]
+      operationId: listModerationActions
+      summary: История действий модерации (admin, UC-B3).
+      description: |
+        Только для роли `admin`. Возвращает страницу записей с фильтрами по
+        moderator_id / from / to / reason. Сортировка `decided_at desc`.
+        RBAC enforcement подключается на шаге `ucp-auth-design`.
+      parameters:
+        - name: moderatorId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: reason
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/ModerationReasonDto'
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationActionPageDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [moderation-actions]
+      operationId: hideProductByModeration
+      summary: Скрыть товар модератором (UC-B1).
+      description: |
+        Принимает решение модератора скрыть нарушающий товар. Атомарно вызывает Catalog
+        и при успехе записывает ModerationAction. Идемпотентна по `Idempotency-Key`.
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Client-supplied UUID — повторный вызов с тем же ключом не создаёт новой записи (BR-M07).
+        - name: X-Moderator-Id
+          in: header
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: |
+            Placeholder для moderator_id до подключения JWT (см. `ucp-auth-design`).
+            В production moderator_id берётся из JWT.sub, заголовок игнорируется.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HideProductByModerationRequest'
+      responses:
+        '201':
+          description: ModerationAction создан, товар скрыт в Catalog.
+          headers:
+            Location:
+              description: URI созданной записи модерации.
+              schema:
+                type: string
+                format: uri
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationActionDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+components:
+  schemas:
+    ServiceMeta:
+      type: object
+      required: [name, version]
+      properties:
+        name:
+          type: string
+          example: backoffice
+        version:
+          type: string
+          example: 0.0.1-SNAPSHOT
+
+    HideProductByModerationRequest:
+      type: object
+      required: [productId, reason]
+      properties:
+        productId:
+          type: string
+          format: uuid
+        reason:
+          $ref: '#/components/schemas/ModerationReasonDto'
+        note:
+          type: string
+          maxLength: 1000
+
+    ModerationActionPageDto:
+      type: object
+      required: [content, page, size, totalElements, totalPages]
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModerationActionDto'
+        page:
+          type: integer
+          example: 1
+        size:
+          type: integer
+          example: 20
+        totalElements:
+          type: integer
+          format: int64
+          example: 137
+        totalPages:
+          type: integer
+          example: 7
+
+    ModerationActionDto:
+      type: object
+      required: [id, productId, moderatorId, reason, decidedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        productId:
+          type: string
+          format: uuid
+        moderatorId:
+          type: string
+          format: uuid
+        reason:
+          $ref: '#/components/schemas/ModerationReasonDto'
+        note:
+          type: string
+        decidedAt:
+          type: string
+          format: date-time
+
+    ModerationReasonDto:
+      type: string
+      enum:
+        - PROHIBITED_GOODS
+        - MISLEADING_TITLE
+        - INVALID_PRICE
+        - OTHER
+
+    ProblemDetails:
+      type: object
+      description: RFC 9457 ProblemDetails-совместимая ошибка.
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+          format: int32
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri
+        code:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Невалидный запрос (BR-M01 / BR-M03).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    NotFound:
+      description: Товар не найден в Catalog.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    Unauthorized:
+      description: JWT отсутствует или не валиден.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    Forbidden:
+      description: Недостаточно прав (нужна роль moderator или admin).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    Conflict:
+      description: Товар уже не PUBLISHED (BR-M04, Catalog 409 INVALID_STATE_TRANSITION).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    ServiceUnavailable:
+      description: Catalog недоступен.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'

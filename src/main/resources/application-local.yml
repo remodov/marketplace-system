@@ -1,0 +1,22 @@
+# BS-2/BS-4: только overrides относительно application.yml.
+# Сервис стартует без живого Keycloak — security в local profile = permitAll (см. LocalSecurityConfig).
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/backoffice
+    username: backoffice
+    password: backoffice
+  liquibase:
+    contexts: production
+  # BS-13: защитный флаг — Kafka не используется в Backoffice (см. §5 спеки), но если когда-нибудь появится consumer, не упадёт на старте без брокера.
+  kafka:
+    listener:
+      auto-startup: false
+
+client:
+  catalog:
+    base-url: http://localhost:8081
+    admin-token: dev-admin-token-placeholder
+
+logging:
+  level:
+    org.jooq: INFO
