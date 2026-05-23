@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-extensions
+      author: ucp-bootstrap-design
+      context: production
+      comment: Расширения PostgreSQL — citext для регистронезависимой уникальности email, pgcrypto для gen_random_uuid
+      changes:
+        - sql:
+            sql: CREATE EXTENSION IF NOT EXISTS citext
+            rollback: DROP EXTENSION IF EXISTS citext
+        - sql:
+            sql: CREATE EXTENSION IF NOT EXISTS pgcrypto
+            rollback: DROP EXTENSION IF EXISTS pgcrypto

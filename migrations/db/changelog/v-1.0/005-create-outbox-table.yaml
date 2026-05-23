@@ -1,0 +1,72 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-create-outbox-table
+      author: ucp-bootstrap-design
+      context: production
+      comment: Transactional Outbox для at-least-once публикации доменных событий в Kafka
+      changes:
+        - createTable:
+            tableName: outbox
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: outbox_pk
+                    nullable: false
+              - column:
+                  name: aggregate_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: aggregate_type
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: event_type
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: event_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: outbox_event_id_uk
+              - column:
+                  name: payload
+                  type: jsonb
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: published_at
+                  type: timestamptz
+
+        - sql:
+            sql: |
+              CREATE INDEX outbox_unpublished_id_idx
+              ON outbox (id)
+              WHERE published_at IS NULL
+            rollback: DROP INDEX IF EXISTS outbox_unpublished_id_idx
+
+        - createIndex:
+            tableName: outbox
+            indexName: outbox_aggregate_idx
+            columns:
+              - column: { name: aggregate_type }
+              - column: { name: aggregate_id }
+
+      rollback:
+        - dropTable:
+            tableName: outbox

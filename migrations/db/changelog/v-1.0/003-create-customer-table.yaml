@@ -1,0 +1,86 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-create-customer-table
+      author: ucp-bootstrap-design
+      context: production
+      comment: Корень агрегата Customer — идентичность покупателя (email + профиль + статус верификации)
+      changes:
+        - createTable:
+            tableName: customer
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: customer_pk
+                    nullable: false
+              - column:
+                  name: email
+                  type: citext
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: customer_email_uk
+              - column:
+                  name: first_name
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_name
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: phone
+                  type: text
+              - column:
+                  name: status
+                  type: customer_status
+                  defaultValue: PENDING_VERIFICATION
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: version
+                  type: bigint
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+        - sql:
+            sql: |
+              ALTER TABLE customer
+                ADD CONSTRAINT customer_first_name_not_blank_chk
+                CHECK (length(btrim(first_name)) > 0)
+            rollback: ALTER TABLE customer DROP CONSTRAINT IF EXISTS customer_first_name_not_blank_chk
+
+        - sql:
+            sql: |
+              ALTER TABLE customer
+                ADD CONSTRAINT customer_last_name_not_blank_chk
+                CHECK (length(btrim(last_name)) > 0)
+            rollback: ALTER TABLE customer DROP CONSTRAINT IF EXISTS customer_last_name_not_blank_chk
+
+        - createIndex:
+            tableName: customer
+            indexName: customer_status_created_at_idx
+            columns:
+              - column: { name: status }
+              - column: { name: created_at, descending: true }
+
+      rollback:
+        - dropTable:
+            tableName: customer

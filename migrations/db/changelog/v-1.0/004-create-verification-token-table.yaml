@@ -1,0 +1,61 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-create-verification-token-table
+      author: ucp-bootstrap-design
+      context: production
+      comment: Child-entity агрегата Customer — одноразовые токены подтверждения email с TTL 24h
+      changes:
+        - createTable:
+            tableName: verification_token
+            columns:
+              - column:
+                  name: token
+                  type: text
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: verification_token_pk
+                    nullable: false
+              - column:
+                  name: customer_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: issued_at
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+              - column:
+                  name: expires_at
+                  type: timestamptz
+                  constraints:
+                    nullable: false
+              - column:
+                  name: used_at
+                  type: timestamptz
+
+        - addForeignKeyConstraint:
+            constraintName: verification_token_customer_fk
+            baseTableName: verification_token
+            baseColumnNames: customer_id
+            referencedTableName: customer
+            referencedColumnNames: id
+            onDelete: CASCADE
+            onUpdate: NO ACTION
+
+        - createIndex:
+            tableName: verification_token
+            indexName: verification_token_customer_id_idx
+            columns:
+              - column: { name: customer_id }
+
+        - sql:
+            sql: |
+              CREATE INDEX verification_token_unused_expires_at_idx
+              ON verification_token (expires_at)
+              WHERE used_at IS NULL
+            rollback: DROP INDEX IF EXISTS verification_token_unused_expires_at_idx
+
+      rollback:
+        - dropTable:
+            tableName: verification_token

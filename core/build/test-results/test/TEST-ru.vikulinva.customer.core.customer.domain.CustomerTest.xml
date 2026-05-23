@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="ru.vikulinva.customer.core.customer.domain.CustomerTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-05-23T11:31:05.873Z" hostname="MacBook-Pro-vva.local" time="0.046">
+  <properties/>
+  <testcase name="BR-C02..C04 + verifyEmail: валидный неистёкший token → ACTIVE" classname="ru.vikulinva.customer.core.customer.domain.CustomerTest" time="0.034"/>
+  <testcase name="Phone non-E.164 → ValidationException" classname="ru.vikulinva.customer.core.customer.domain.CustomerTest" time="0.002"/>
+  <testcase name="BR-C03: повторное использование токена → TokenInvalidOrExpiredException" classname="ru.vikulinva.customer.core.customer.domain.CustomerTest" time="0.001"/>
+  <testcase name="BR-C06: updateProfile в PENDING_VERIFICATION → ProfileUpdateForbiddenStatusException" classname="ru.vikulinva.customer.core.customer.domain.CustomerTest" time="0.0"/>
+  <testcase name="BR-C08 + register: создаёт PENDING_VERIFICATION с токеном и эмитит CustomerRegistered" classname="ru.vikulinva.customer.core.customer.domain.CustomerTest" time="0.003"/>
+  <testcase name="BR-C06: updateProfile из ACTIVE обновляет профиль" classname="ru.vikulinva.customer.core.customer.domain.CustomerTest" time="0.003"/>
+  <testcase name="BR-C04: просроченный токен → TokenInvalidOrExpiredException" classname="ru.vikulinva.customer.core.customer.domain.CustomerTest" time="0.0"/>
+  <testcase name="BR-C08: пустое firstName → ValidationException" classname="ru.vikulinva.customer.core.customer.domain.CustomerTest" time="0.001"/>
+  <testcase name="Email нормализуется в lower-case" classname="ru.vikulinva.customer.core.customer.domain.CustomerTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
