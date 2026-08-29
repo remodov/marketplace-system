@@ -1,0 +1,36 @@
+# Gradle
+.gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+/out/
+
+# Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local config
+.env
+.env.local
+local-data/
+
+# JOOQ generated (если будем подключать на Tier B)
+**/generated/

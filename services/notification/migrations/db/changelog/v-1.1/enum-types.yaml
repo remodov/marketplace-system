@@ -1,0 +1,55 @@
+databaseChangeLog:
+
+  # 1. notification_channel ------------------------------------------------
+  - changeSet:
+      id: v-1.1-create-notification-channel-enum
+      author: vikulin
+      changes:
+        - sql:
+            sql: "CREATE TYPE notification_channel AS ENUM ('EMAIL','PUSH')"
+            rollback: "DROP TYPE notification_channel"
+        - sql:
+            sql: |
+              ALTER TABLE notifications
+                ALTER COLUMN channel TYPE notification_channel
+                USING channel::notification_channel
+            rollback: |
+              ALTER TABLE notifications
+                ALTER COLUMN channel TYPE varchar(16)
+                USING channel::text
+
+  # 2. notification_status -------------------------------------------------
+  - changeSet:
+      id: v-1.1-create-notification-status-enum
+      author: vikulin
+      changes:
+        - sql:
+            sql: "CREATE TYPE notification_status AS ENUM ('QUEUED','SENT','DELIVERED','BOUNCED','FAILED')"
+            rollback: "DROP TYPE notification_status"
+        - sql:
+            sql: |
+              ALTER TABLE notifications
+                ALTER COLUMN status TYPE notification_status
+                USING status::notification_status
+            rollback: |
+              ALTER TABLE notifications
+                ALTER COLUMN status TYPE varchar(16)
+                USING status::text
+
+  # 3. delivery_attempt_result ---------------------------------------------
+  - changeSet:
+      id: v-1.1-create-delivery-attempt-result-enum
+      author: vikulin
+      changes:
+        - sql:
+            sql: "CREATE TYPE delivery_attempt_result AS ENUM ('OK','TRANSIENT_ERROR','PERMANENT_ERROR')"
+            rollback: "DROP TYPE delivery_attempt_result"
+        - sql:
+            sql: |
+              ALTER TABLE delivery_attempts
+                ALTER COLUMN result TYPE delivery_attempt_result
+                USING result::delivery_attempt_result
+            rollback: |
+              ALTER TABLE delivery_attempts
+                ALTER COLUMN result TYPE varchar(32)
+                USING result::text

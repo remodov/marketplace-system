@@ -1,0 +1,131 @@
+databaseChangeLog:
+
+  # 1. notifications --------------------------------------------------------
+  - changeSet:
+      id: v-1.0-create-notifications-table
+      author: vikulin
+      changes:
+        - createTable:
+            tableName: notifications
+            columns:
+              - column: { name: id,                  type: uuid,           constraints: { primaryKey: true, primaryKeyName: notifications_pkey, nullable: false } }
+              - column: { name: event_id,            type: uuid,           constraints: { nullable: false } }
+              - column: { name: event_type,          type: "varchar(64)",  constraints: { nullable: false } }
+              - column: { name: user_id,             type: uuid,           constraints: { nullable: false } }
+              - column: { name: channel,             type: "varchar(16)",  constraints: { nullable: false } }
+              - column: { name: contact,             type: "varchar(256)", constraints: { nullable: false } }
+              - column: { name: template_key,        type: "varchar(128)", constraints: { nullable: false } }
+              - column: { name: locale,              type: "varchar(8)",   constraints: { nullable: false } }
+              - column: { name: status,              type: "varchar(16)",  constraints: { nullable: false } }
+              - column: { name: source_event_payload, type: jsonb,         constraints: { nullable: false } }
+              - column: { name: template_variables,  type: jsonb,          constraints: { nullable: false } }
+              - column: { name: external_id,         type: "varchar(128)" }
+              - column: { name: created_at,          type: timestamptz,    constraints: { nullable: false } }
+              - column: { name: sent_at,             type: timestamptz }
+              - column: { name: delivered_at,        type: timestamptz }
+              - column: { name: last_error,          type: text }
+        - createIndex:
+            tableName: notifications
+            indexName: idx_notifications_status_created
+            columns:
+              - column: { name: status }
+              - column: { name: created_at }
+        - createIndex:
+            tableName: notifications
+            indexName: idx_notifications_user_created
+            columns:
+              - column: { name: user_id }
+              - column: { name: created_at }
+        - createIndex:
+            tableName: notifications
+            indexName: idx_notifications_external_id
+            columns:
+              - column: { name: external_id }
+
+  # 2. templates ------------------------------------------------------------
+  - changeSet:
+      id: v-1.0-create-templates-table
+      author: vikulin
+      changes:
+        - createTable:
+            tableName: templates
+            columns:
+              - column: { name: key,        type: "varchar(128)", constraints: { nullable: false } }
+              - column: { name: locale,     type: "varchar(8)",   constraints: { nullable: false } }
+              - column: { name: subject,    type: "varchar(256)", constraints: { nullable: false } }
+              - column: { name: body,       type: text,           constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamptz,    constraints: { nullable: false } }
+        - addPrimaryKey:
+            tableName: templates
+            columnNames: "key, locale"
+            constraintName: templates_pkey
+
+  # 3. delivery_attempts ----------------------------------------------------
+  - changeSet:
+      id: v-1.0-create-delivery-attempts-table
+      author: vikulin
+      changes:
+        - createTable:
+            tableName: delivery_attempts
+            columns:
+              - column: { name: id,               type: uuid,         constraints: { primaryKey: true, primaryKeyName: delivery_attempts_pkey, nullable: false } }
+              - column: { name: notification_id,  type: uuid,         constraints: { nullable: false } }
+              - column: { name: attempt_number,   type: int,          constraints: { nullable: false } }
+              - column: { name: result,           type: "varchar(32)", constraints: { nullable: false } }
+              - column: { name: response_snippet, type: text }
+              - column: { name: attempted_at,     type: timestamptz,  constraints: { nullable: false } }
+        - addForeignKeyConstraint:
+            baseTableName: delivery_attempts
+            baseColumnNames: notification_id
+            constraintName: fk_delivery_attempts_notification
+            referencedTableName: notifications
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - createIndex:
+            tableName: delivery_attempts
+            indexName: idx_delivery_attempts_notification
+            columns:
+              - column: { name: notification_id }
+              - column: { name: attempt_number }
+
+  # 4. processed_events -----------------------------------------------------
+  - changeSet:
+      id: v-1.0-create-processed-events-table
+      author: vikulin
+      changes:
+        - createTable:
+            tableName: processed_events
+            columns:
+              - column: { name: event_id,     type: uuid,           constraints: { primaryKey: true, primaryKeyName: processed_events_pkey, nullable: false } }
+              - column: { name: event_type,   type: "varchar(128)", constraints: { nullable: false } }
+              - column: { name: processed_at, type: timestamptz,    constraints: { nullable: false } }
+        - createIndex:
+            tableName: processed_events
+            indexName: idx_processed_events_processed_at
+            columns:
+              - column: { name: processed_at }
+
+  # 5. seed templates -------------------------------------------------------
+  - changeSet:
+      id: v-1.0-seed-default-templates
+      author: vikulin
+      changes:
+        - sql:
+            splitStatements: true
+            stripComments: true
+            sql: |
+              INSERT INTO templates (key, locale, subject, body, updated_at) VALUES
+              ('order.confirmed.email', 'ru', 'Заказ ${order_id} подтверждён', 'Здравствуйте, ${customer_name}! Ваш заказ ${order_id} подтверждён.', now()),
+              ('order.confirmed.push',  'ru', 'Заказ подтверждён',             'Заказ ${order_id} подтверждён',                                         now()),
+              ('order.paid.email',      'ru', 'Оплата получена — ${order_id}', 'Спасибо! Оплата за заказ ${order_id} получена.',                        now()),
+              ('order.paid.push',       'ru', 'Оплата получена',               'Платёж по заказу ${order_id} прошёл',                                   now()),
+              ('order.shipped.email',   'ru', 'Заказ ${order_id} отправлен',   'Трек-номер: ${tracking_number}',                                        now()),
+              ('order.shipped.push',    'ru', 'Заказ отправлен',               'Трек: ${tracking_number}',                                              now()),
+              ('order.delivered.email', 'ru', 'Получено! Оставьте отзыв',      'Заказ ${order_id} доставлен. Будем благодарны за отзыв.',               now()),
+              ('order.cancelled.email', 'ru', 'Заказ ${order_id} отменён',     'Заказ отменён. Если был возврат — он уже инициирован.',                 now()),
+              ('order.cancelled.push',  'ru', 'Заказ отменён',                 'Заказ ${order_id} отменён',                                             now()),
+              ('order.refunded.email',  'ru', 'Возврат по ${order_id}',        'Возврат средств отправлен на исходный способ оплаты.',                  now()),
+              ('order.refunded.push',   'ru', 'Возврат отправлен',             'Возврат по заказу ${order_id}',                                         now()),
+              ('dispute.opened.push',   'ru', 'Открыт спор',                   'По заказу ${order_id} открыт спор',                                     now()),
+              ('dispute.resolved.email','ru', 'Спор по ${order_id} закрыт',    'Решение оператора: ${resolution}',                                      now()),
+              ('dispute.resolved.push', 'ru', 'Спор закрыт',                   'Решение по заказу ${order_id}',                                         now());

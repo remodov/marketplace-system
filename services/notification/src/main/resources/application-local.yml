@@ -1,0 +1,29 @@
+# Локальный профиль:
+#   docker-compose up -d postgres
+#   ./gradlew bootRun --args='--spring.profiles.active=local'
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/notifications
+    username: notifications
+    password: notifications
+  kafka:
+    listener:
+      auto-startup: false      # без живой Kafka сервис стартует, но консьюмеры не работают
+
+clients:
+  customer-bff:
+    base-url: http://localhost:9003
+
+notificationservice:
+  dispatch:
+    fixed-delay-ms: 5000        # медленнее в dev
+  mailgun:
+    api-key: ""                 # без ключа send упадёт с PERMANENT_ERROR — это OK, для теста БД это не критично
+    webhook-signing-key: ""     # в dev HMAC-валидация скипается с WARN
+
+logging:
+  level:
+    ru.vikulinva.notificationservice: DEBUG
+    org.springframework.security: INFO
+    liquibase: INFO

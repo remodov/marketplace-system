@@ -1,0 +1,79 @@
+spring:
+  application:
+    name: notification-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/notifications
+    username: notifications
+    password: notifications
+    hikari:
+      maximum-pool-size: 10
+  liquibase:
+    change-log: classpath:db/changelog-master.yaml
+    contexts: production
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      group-id: notification-service
+      auto-offset-reset: earliest
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${OAUTH_JWK_SET_URI:http://localhost:8081/realms/marketplace/protocol/openid-connect/certs}
+
+server:
+  port: 8090
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: notification-service
+
+resilience4j:
+  retry:
+    instances:
+      customer-bff:
+        max-attempts: 2
+        wait-duration: 200ms
+        retry-exceptions:
+          - org.springframework.web.client.ResourceAccessException
+  circuitbreaker:
+    instances:
+      customer-bff:
+        sliding-window-size: 30
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+
+clients:
+  customer-bff:
+    base-url: http://localhost:9003
+
+notificationservice:
+  kafka:
+    orders-topic: marketplace.orders.v1
+  dispatch:
+    fixed-delay-ms: 1000
+    batch-size: 100
+  purge:
+    cron: "0 0 3 * * *"
+    ttl-days: 90
+  mailgun:
+    base-url: https://api.mailgun.net
+    domain: example.com
+    from: no-reply@example.com
+    api-key: ${MAILGUN_API_KEY:}
+    webhook-signing-key: ${MAILGUN_WEBHOOK_KEY:}
+  fcm:
+    base-url: https://fcm.googleapis.com
+    project: ${FCM_PROJECT:demo-project}
+
+logging:
+  level:
+    ru.vikulinva.notificationservice: INFO

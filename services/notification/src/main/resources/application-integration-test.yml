@@ -1,0 +1,52 @@
+# Профиль для интеграционных тестов: WireMock-стабы Customer BFF / Mailgun / FCM
+# подключаются через @DynamicPropertySource в PlatformBaseIntegrationTest.
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/notifications
+    username: notifications
+    password: notifications
+  kafka:
+    bootstrap-servers: dummy:0
+    listener:
+      auto-startup: false
+
+clients:
+  customer-bff:
+    base-url: http://localhost:9               # переопределяется WireMock-портом
+
+notificationservice:
+  kafka:
+    orders-topic: it.orders.v1
+  dispatch:
+    fixed-delay-ms: 86400000                  # шедулер не дёргается в тестах — вызываем .tick()
+    batch-size: 100
+  purge:
+    cron: "0 0 3 1 1 *"                       # never fires
+    ttl-days: 90
+  mailgun:
+    base-url: http://localhost:9              # WireMock
+    api-key: it-key
+    webhook-signing-key: it-signing-key
+    domain: it.example.com
+    from: it@example.com
+  fcm:
+    base-url: http://localhost:9              # WireMock
+    project: it-project
+
+resilience4j:
+  retry:
+    instances:
+      customer-bff:
+        max-attempts: 1
+  circuitbreaker:
+    instances:
+      customer-bff:
+        sliding-window-size: 100
+        minimum-number-of-calls: 100          # CB фактически не откроется в тестах
+        failure-rate-threshold: 99
+
+logging:
+  level:
+    ru.vikulinva.notificationservice: DEBUG
+    org.springframework: WARN
