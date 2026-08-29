@@ -91,7 +91,8 @@ Kafka, Redis, MongoDB, Elasticsearch, MinIO и Keycloak. Что это за ин
 | 4 | правило внутри модели | `step-04-domain-rules` | [Что такое DDD](https://vikulin-va.ru/ddd/01-what-is-ddd/) · [Современная Java](https://vikulin-va.ru/java/records-and-modern/) |
 | 5 | резерв, миграция, сто покупателей разом | `step-05-stock-and-locking` | [PostgreSQL](https://vikulin-va.ru/postgres/) · [Транзакции и блокировки](https://vikulin-va.ru/hibernate/transactions-and-locking/) · [Гонки](https://vikulin-va.ru/concurrency/race-conditions/) |
 | 6 | поиск: индекс и кэш | `step-06-search-and-cache` | [Типы индексов](https://vikulin-va.ru/postgres/indexes-types/) · [Кэширование](https://vikulin-va.ru/redis/caching-patterns/) |
-| 7–15 | взрослая система: гексагон, события, сага, поиск, наблюдаемость | в работе | [План практикума](docs/practicum/PLAN.md) |
+| 7 | тот же каталог, но по-взрослому: UseCase, Handler, порт | `step-07-usecase-and-handler` | [Use Case Pattern](https://vikulin-va.ru/use-case-pattern/) · [Гексагональная архитектура](https://vikulin-va.ru/hexagonal/) · [Catalog Service](https://vikulin-va.ru/case/catalog-service/) |
+| 8–15 | заказ, события, сага, поиск, наблюдаемость | в работе | [План практикума](docs/practicum/PLAN.md) |
 
 Шаги 1–6 идут по `services/catalog-starter`, дальше — по настоящим сервисам.
 

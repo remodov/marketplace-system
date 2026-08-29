@@ -148,28 +148,36 @@ Liquibase на пустой базе и сверяет её с сущность�
 | 4 | `step-04-domain-rules` | `step-04-domain-rules-solution` | 7 из 26 |
 | 5 | `step-05-stock-and-locking` | `step-05-stock-and-locking-solution` | 4 из 29 |
 | 6 | `step-06-search-and-cache` | `step-06-search-and-cache-solution` | 1 из 32 |
+| 7 | `step-07-usecase-and-handler` | `step-07-usecase-and-handler-solution` | 6 из 40 |
 
 Шаг 1 ветки не требует: там запускают готовый сервис и разбирают, из чего он
 состоит. `main` — накопленный эталон: там лежит всё, что сделано к текущему шагу.
+
+Шаги 1–6 идут на H2 и Docker не требуют. С седьмого нужен стенд: взрослые сервисы
+ходят в настоящую PostgreSQL, а классы jOOQ генерируются из накатанной схемы.
 
 # Часть вторая: взрослая система
 
 ## Шаг 7. Тот же каталог, но по-взрослому
 
-**Материал:** [/use-case-pattern/](https://vikulin-va.ru/use-case-pattern/) · [/patterns/hexagonal/](https://vikulin-va.ru/hexagonal/) · [/case/catalog-service/](https://vikulin-va.ru/case/catalog-service/)
+**Материал:** [/use-case-pattern/](https://vikulin-va.ru/use-case-pattern/) · [/hexagonal/](https://vikulin-va.ru/hexagonal/) · [/case/catalog-service/](https://vikulin-va.ru/case/catalog-service/)
 
 **Фазы:** 29 UCP · 25 архитектурные паттерны · 26 методологии
 
-**Даётся:** `services/catalog` — гексагональные модули, jOOQ, спецификация.
+**Даётся:** `services/catalog` — гексагональные модули, jOOQ, спецификация,
+ABAC и аудит; интеграционный тест смены цены на настоящей PostgreSQL.
 
-**Ученик:** находит в двух версиях одно и то же поведение и отвечает, что дала
-сложность и чего стоила; переносит свой шаг 3 в UseCase и Handler.
+**Ученик:** сравнивает две версии одного сервиса и письменно отвечает, что дала
+сложность и чего стоила; потом переносит смену цены из третьего шага сюда —
+контракт в OpenAPI, UseCase, Handler, метод порта, адаптер на jOOQ, контроллер.
 
-**Проверка:** ревью по чек-листу; тесты взрослой версии зелёные.
+**Проверка:** шесть проверок `ChangeProductPriceIntegrationTest` зелёные — цена
+меняется и доезжает до базы, ноль не проходит, чужой товар отдаёт 404, админское
+изменение оставляет запись в журнале.
 
 ## Шаг 8. Заказ: синхронный резерв у соседа
 
-**Материал:** [/patterns/resilience/](https://vikulin-va.ru/patterns/resilience/) · [/microservices/](https://vikulin-va.ru/architecture-choice/monolith-vs-microservices/) · [/case/order-service/](https://vikulin-va.ru/case/order-service/)
+**Материал:** [/patterns/resilience/](https://vikulin-va.ru/patterns/resilience/) · [/architecture-choice/monolith-vs-microservices/](https://vikulin-va.ru/architecture-choice/monolith-vs-microservices/) · [/case/order-service/](https://vikulin-va.ru/case/order-service/)
 
 **Фазы:** 11 сеть · 15 микросервисы · 25 паттерны сервиса
 
@@ -239,7 +247,7 @@ AsyncAPI (`contracts/`) с генерацией DTO.
 
 ## Шаг 13. API Gateway и BFF
 
-**Материал:** [/api-styles/](https://vikulin-va.ru/api-styles/) · [/microservices/](https://vikulin-va.ru/architecture-choice/monolith-vs-microservices/)
+**Материал:** [/api-styles/](https://vikulin-va.ru/api-styles/) · [/architecture-choice/monolith-vs-microservices/](https://vikulin-va.ru/architecture-choice/monolith-vs-microservices/)
 
 **Фазы:** 12 · 15 · 23 · 11
 
