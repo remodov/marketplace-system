@@ -28,8 +28,7 @@ public class Product {
     @Column(nullable = false)
     private int stock;
 
-    @Column(nullable = false)
-    private int reserved;
+    // TODO шаг 5: поле под зарезервированное количество.
 
     @Version
     private long version;
@@ -60,12 +59,9 @@ public class Product {
         return stock;
     }
 
-    public int getReserved() {
-        return reserved;
-    }
-
+    // TODO шаг 5: сколько зарезервировано и сколько реально можно продать.
     public int available() {
-        return stock - reserved;
+        throw new UnsupportedOperationException("Шаг 5: резерв ещё не отделён от остатка");
     }
 
     public void changePrice(BigDecimal newPrice) {
@@ -88,8 +84,9 @@ public class Product {
         if (delta == 0) {
             throw new IllegalArgumentException("Изменение остатка не может быть нулевым");
         }
-        if (stock + delta < reserved) {
-            throw new OutOfStockException(id, -delta, stock - reserved);
+        // TODO шаг 5: списывать можно только то, что не удержано резервом.
+        if (stock + delta < 0) {
+            throw new OutOfStockException(id, -delta, stock);
         }
         stock += delta;
     }
@@ -98,9 +95,10 @@ public class Product {
         if (quantity <= 0) {
             throw new IllegalArgumentException("Количество должно быть больше нуля");
         }
-        if (quantity > available()) {
-            throw new OutOfStockException(id, quantity, available());
+        // TODO шаг 5: резерв удерживает товар, а не списывает его со склада.
+        if (quantity > stock) {
+            throw new OutOfStockException(id, quantity, stock);
         }
-        reserved += quantity;
+        stock -= quantity;
     }
 }

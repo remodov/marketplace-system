@@ -16,9 +16,8 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
 
     List<Product> findByTitleContainingIgnoreCase(String part);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select p from Product p where p.id = :id")
-    Optional<Product> findForUpdate(@Param("id") UUID id);
+    // TODO шаг 5: выборка товара под блокировку строки.
+    // Обычный findById для резерва не годится — почему, покажет тест на сто покупателей.
 
     List<Product> findByPriceLessThanEqualOrderByPriceAsc(BigDecimal maxPrice);
 }

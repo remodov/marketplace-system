@@ -17,11 +17,6 @@ databaseChangeLog:
             columns:
               - column: { name: title }
 
-  - changeSet:
-      id: 002-products-reserved
-      author: practicum
-      changes:
-        - addColumn:
-            tableName: products
-            columns:
-              - column: { name: reserved, type: int, defaultValueNumeric: 0, constraints: { nullable: false } }
+# TODO шаг 5: changeSet 002 — колонка reserved.
+# Тип, значение по умолчанию и nullable выбираешь сам; помни, что таблица уже
+# может быть не пустой, поэтому у новой обязательной колонки нужен default.

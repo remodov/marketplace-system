@@ -61,7 +61,8 @@ public class ProductService {
 
     @Transactional
     public Product reserve(UUID id, int quantity) {
-        Product product = repository.findForUpdate(id).orElseThrow(() -> new ProductNotFoundException(id));
+        // TODO шаг 5: брать товар под блокировку, а не обычным чтением.
+        Product product = byId(id);
         product.reserve(quantity);
         return product;
     }

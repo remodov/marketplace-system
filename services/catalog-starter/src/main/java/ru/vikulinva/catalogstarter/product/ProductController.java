@@ -30,11 +30,11 @@ public class ProductController {
         this.service = service;
     }
 
-    public record ProductView(UUID id, String title, BigDecimal price, int stock, int reserved, int available) {
+    // TODO шаг 5: в ответе должны появиться reserved и available.
+    public record ProductView(UUID id, String title, BigDecimal price, int stock) {
 
         static ProductView of(Product product) {
-            return new ProductView(product.getId(), product.getTitle(), product.getPrice(),
-                product.getStock(), product.getReserved(), product.available());
+            return new ProductView(product.getId(), product.getTitle(), product.getPrice(), product.getStock());
         }
     }
 
