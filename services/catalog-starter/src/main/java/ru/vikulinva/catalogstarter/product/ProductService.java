@@ -45,12 +45,8 @@ public class ProductService {
         return product;
     }
 
-    @Transactional
-    public Product applyDiscount(UUID id, int percent) {
-        Product product = byId(id);
-        product.applyDiscount(percent);
-        return product;
-    }
+    // TODO шаг 4: сценарий скидки. Сервис только зовёт метод сущности —
+    // если сюда захотелось написать проверку процента, правило утекает из модели.
 
     @Transactional
     public Product changeStock(UUID id, int delta) {

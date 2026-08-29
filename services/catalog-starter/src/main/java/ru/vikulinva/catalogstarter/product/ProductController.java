@@ -51,8 +51,7 @@ public class ProductController {
     public record ChangeStockRequest(@NotNull Integer delta) {
     }
 
-    public record ApplyDiscountRequest(@NotNull Integer percent) {
-    }
+    // TODO шаг 4: тело запроса на скидку.
 
     @GetMapping
     public List<ProductView> search(@RequestParam(required = false) String query,
@@ -77,10 +76,7 @@ public class ProductController {
         return ProductView.of(service.changePrice(id, request.price()));
     }
 
-    @PatchMapping("/{id}/discount")
-    public ProductView applyDiscount(@PathVariable UUID id, @Valid @RequestBody ApplyDiscountRequest request) {
-        return ProductView.of(service.applyDiscount(id, request.percent()));
-    }
+    // TODO шаг 4: PATCH /products/{id}/discount.
 
     @PatchMapping("/{id}/stock")
     public ProductView changeStock(@PathVariable UUID id, @Valid @RequestBody ChangeStockRequest request) {

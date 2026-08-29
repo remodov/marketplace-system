@@ -64,14 +64,9 @@ public class Product {
         this.price = newPrice;
     }
 
-    public void applyDiscount(int percent) {
-        if (percent < 1 || percent > MAX_DISCOUNT_PERCENT) {
-            throw new IllegalArgumentException(
-                "Скидка допустима от 1 до " + MAX_DISCOUNT_PERCENT + " процентов, а не " + percent);
-        }
-        BigDecimal multiplier = BigDecimal.valueOf(100 - percent).divide(BigDecimal.valueOf(100));
-        this.price = price.multiply(multiplier).setScale(2, RoundingMode.HALF_UP);
-    }
+    // TODO шаг 4: скидка в процентах.
+    // Граница MAX_DISCOUNT_PERCENT уже объявлена выше — это часть правила, а не число из воздуха.
+    // Цена в рублях и копейках: округление задаётся явно, иначе получится хвост из копеек.
 
     public void changeStock(int delta) {
         if (delta == 0) {
