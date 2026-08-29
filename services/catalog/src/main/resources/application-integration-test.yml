@@ -19,3 +19,13 @@ logging:
     org.jooq: WARN
     org.springframework.security: TRACE
     org.springframework.security.web: TRACE
+
+storage:
+  images:
+    bucket: marketplace-images
+    endpoint: http://localhost:9000
+    region: us-east-1
+    access-key: test-access
+    secret-key: test-secret
+    upload-ttl-minutes: 10
+    download-ttl-minutes: 60

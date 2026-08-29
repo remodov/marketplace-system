@@ -159,6 +159,38 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '500': { $ref: '#/components/responses/InternalServerError' }
 
+  /api/v1/products/{productId}/image-upload-url:
+    parameters:
+      - $ref: '#/components/parameters/ProductId'
+    post:
+      tags: [Products]
+      operationId: createImageUploadUrl
+      summary: Получить временную ссылку на загрузку изображения
+      description: |
+        Возвращает подписанную ссылку, по которой браузер кладёт файл прямо
+        в хранилище. Сам файл через сервис не идёт.
+        ABAC: только владелец (BR-P04); чужой → 404 `OWN_PRODUCT_REQUIRED`.
+      security:
+        - bearerAuth: [seller]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImageUploadRequest'
+      responses:
+        '200':
+          description: Ссылка выдана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageUploadUrlDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+
   /api/v1/products/my:
     get:
       tags: [Products]
@@ -263,6 +295,28 @@ components:
           minimum: 0
           exclusiveMinimum: true
           example: 79990.00
+
+    ImageUploadRequest:
+      type: object
+      required: [contentType]
+      properties:
+        contentType:
+          type: string
+          enum: [image/jpeg, image/png, image/webp]
+          example: image/jpeg
+
+    ImageUploadUrlDto:
+      type: object
+      required: [key, url, expiresAt]
+      properties:
+        key:
+          type: string
+          example: products/3fa85f64-5717-4562-b3fc-2c963f66afa6/9c2f
+        url:
+          type: string
+          format: uri
+        expiresAt:
+          type: string
 
     ProductDto:
       type: object

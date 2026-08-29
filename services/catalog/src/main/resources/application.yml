@@ -38,3 +38,13 @@ logging:
   level:
     root: INFO
     ru.remodov.catalog: DEBUG
+
+storage:
+  images:
+    bucket: ${IMAGES_BUCKET:marketplace-images}
+    endpoint: ${IMAGES_ENDPOINT:http://localhost:9000}
+    region: ${IMAGES_REGION:us-east-1}
+    access-key: ${IMAGES_ACCESS_KEY:minioadmin}
+    secret-key: ${IMAGES_SECRET_KEY:minioadmin}
+    upload-ttl-minutes: 10
+    download-ttl-minutes: 60

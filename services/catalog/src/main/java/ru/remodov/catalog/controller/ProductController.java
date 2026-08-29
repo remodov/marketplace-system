@@ -11,6 +11,9 @@ import ru.remodov.catalog.domain.ProductId;
 import ru.remodov.catalog.domain.ProductSortField;
 import ru.remodov.catalog.generated.api.ProductsApi;
 import ru.remodov.catalog.generated.api.model.ChangePriceRequest;
+import ru.remodov.catalog.generated.api.model.ImageUploadRequest;
+import ru.remodov.catalog.generated.api.model.ImageUploadUrlDto;
+import ru.remodov.catalog.usecase.image.RequestImageUploadUseCase;
 import ru.remodov.catalog.generated.api.model.CreateProductRequest;
 import ru.remodov.catalog.generated.api.model.ProductDto;
 import ru.remodov.catalog.generated.api.model.ProductPageDto;
@@ -67,6 +70,21 @@ public class ProductController implements ProductsApi {
         return ResponseEntity.ok(
             dispatcher.dispatch(new PublishProductUseCase(ProductId.of(productId), sellerId, isAdmin))
         );
+    }
+
+    @Override
+    @PreAuthorize("hasRole('seller') or hasRole('admin')")
+    public ResponseEntity<ImageUploadUrlDto> createImageUploadUrl(UUID productId, ImageUploadRequest req) {
+        var sellerId = authenticatedSeller.currentSellerId();
+        boolean isAdmin = authenticatedSeller.isAdmin();
+        var upload = dispatcher.dispatch(new RequestImageUploadUseCase(
+            ProductId.of(productId), sellerId, isAdmin, req.getContentType().getValue()));
+
+        ImageUploadUrlDto dto = new ImageUploadUrlDto();
+        dto.setKey(upload.key());
+        dto.setUrl(java.net.URI.create(upload.url()));
+        dto.setExpiresAt(upload.expiresAt());
+        return ResponseEntity.ok(dto);
     }
 
     @Override

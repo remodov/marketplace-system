@@ -49,6 +49,10 @@ dependencies {
     implementation("ru.vikulinva:usecase-pattern:1.1.0")
     implementation("ru.vikulinva:usecase-pattern-starter:1.1.0")
 
+    // Хранилище изображений: S3-совместимое (в стенде — MinIO).
+    implementation(platform("software.amazon.awssdk:bom:2.29.45"))
+    implementation("software.amazon.awssdk:s3")
+
     implementation("io.micrometer:micrometer-registry-prometheus")
     implementation("io.opentelemetry:opentelemetry-api:1.45.0")
 
