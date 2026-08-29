@@ -62,7 +62,7 @@ public abstract class PlatformBaseIntegrationTest {
     @DynamicPropertySource
     static void registerProps(DynamicPropertyRegistry registry) {
         // Подключаемся к Postgres из docker-compose.yml — тот же, что и для local dev.
-        registry.add("spring.datasource.url", () -> "jdbc:postgresql://localhost:5432/orders");
+        registry.add("spring.datasource.url", () -> "jdbc:postgresql://localhost:5433/orders");
         registry.add("spring.datasource.username", () -> "orders");
         registry.add("spring.datasource.password", () -> "orders");
         registry.add("clients.catalog.base-url", () -> "http://localhost:" + CATALOG_WIREMOCK_PORT);
