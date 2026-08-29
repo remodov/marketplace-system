@@ -60,6 +60,10 @@ public class Product {
     }
 
     // TODO шаг 5: сколько зарезервировано и сколько реально можно продать.
+    public int getReserved() {
+        throw new UnsupportedOperationException("Шаг 5: резерв ещё не отделён от остатка");
+    }
+
     public int available() {
         throw new UnsupportedOperationException("Шаг 5: резерв ещё не отделён от остатка");
     }
