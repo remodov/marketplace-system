@@ -11,7 +11,7 @@
 ## Запустить
 
 ```bash
-docker compose -f ../../infra/compose.yaml up -d postgres-catalog
+docker compose -f ../../infra/compose.yaml up -d postgres-catalog-starter
 ../../gradlew bootRun
 ```
 

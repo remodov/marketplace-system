@@ -50,7 +50,7 @@ Kafka, Redis, MongoDB, Elasticsearch, MinIO и Keycloak. Что это за ин
 
 | что | порт | зачем | почитать |
 |---|---|---|---|
-| PostgreSQL order / customer / notification / backoffice / payment / catalog | 5433–5438 | источник правды каждого сервиса | [PostgreSQL](https://vikulin-va.ru/postgres/) |
+| PostgreSQL order / customer / notification / backoffice / payment / catalog / catalog-starter | 5433–5439 | источник правды каждого сервиса | [PostgreSQL](https://vikulin-va.ru/postgres/) |
 | Kafka | 9092 | события заказа, outbox, сага | [Kafka](https://vikulin-va.ru/kafka/) |
 | Redis | 6379 | кэш карточек, счётчики лимита частоты | [Redis](https://vikulin-va.ru/redis/) |
 | MongoDB | 27017 | журнал доставок и шаблоны уведомлений | [MongoDB](https://vikulin-va.ru/mongodb/) |
