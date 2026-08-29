@@ -1,0 +1,18 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: bff
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+downstream:
+  order: ${ORDER_URL:http://localhost:8080}
+  catalog: ${CATALOG_URL:http://localhost:8081}
+  payment: ${PAYMENT_URL:http://localhost:8085}
+
+rate-limit:
+  requests-per-minute: 60

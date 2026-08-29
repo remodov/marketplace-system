@@ -1,0 +1,15 @@
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+# Соседи по умолчанию никуда не ведут: тесты, которым они нужны,
+# поднимают заглушки и подменяют адреса через @DynamicPropertySource.
+downstream:
+  order: http://localhost:18199
+  catalog: http://localhost:18199
+  payment: http://localhost:18199
+
+rate-limit:
+  requests-per-minute: 3
