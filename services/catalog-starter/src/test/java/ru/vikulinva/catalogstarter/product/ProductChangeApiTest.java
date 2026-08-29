@@ -16,6 +16,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -90,6 +91,23 @@ class ProductChangeApiTest {
 
         mvc.perform(get("/products/{id}", productId))
             .andExpect(jsonPath("$.stock", is(5)));
+    }
+
+    @Test
+    void writeOffCannotTouchReservedGoods() throws Exception {
+        mvc.perform(post("/products/{id}/reserve", productId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"quantity\":4}"))
+            .andExpect(status().isOk());
+
+        mvc.perform(patch("/products/{id}/stock", productId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"delta\":-3}"))
+            .andExpect(status().isConflict());
+
+        mvc.perform(get("/products/{id}", productId))
+            .andExpect(jsonPath("$.stock", is(5)))
+            .andExpect(jsonPath("$.available", is(1)));
     }
 
     @Test
