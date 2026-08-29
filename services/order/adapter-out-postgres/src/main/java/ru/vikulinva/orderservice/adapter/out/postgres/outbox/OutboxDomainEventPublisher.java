@@ -39,6 +39,7 @@ public class OutboxDomainEventPublisher implements DomainEventPublisher {
         // TODO шаг 10: положить событие в таблицу outbox — в той же транзакции,
         // что и сам агрегат. Строка ждёт relay: published_at пока пустой.
         // Колонки таблицы видно в сгенерированном классе OUTBOX.
-        throw new UnsupportedOperationException("Шаг 10: публикация через outbox не реализована");
+        // Сейчас событие молча теряется — ровно то, что бывает, когда публикацию
+        // «сделаем потом»: сервис работает, соседи ничего не знают.
     }
 }
