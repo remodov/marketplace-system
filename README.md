@@ -31,7 +31,7 @@ Kafka, Redis, MongoDB, Elasticsearch и Keycloak.
 
 | что | порт | зачем |
 |---|---|---|
-| PostgreSQL catalog / order / customer / notification / backoffice / payment | 5432–5437 | источник правды каждого сервиса |
+| PostgreSQL order / customer / notification / backoffice / payment / catalog | 5433–5438 | источник правды каждого сервиса |
 | Kafka | 9092 | события заказа, outbox, сага |
 | Redis | 6379 | кэш карточек, счётчики лимита частоты |
 | MongoDB | 27017 | журнал доставок и шаблоны уведомлений |

@@ -1,7 +1,11 @@
 plugins {
     java
-    checkstyle
 }
+
+// Checkstyle применяется к модулям (см. subprojects). В корне сборки исходников
+// нет, а плагин там требовал репозитории, которых в корне не объявлено — сборка
+// падала на «no repositories are defined».
+
 
 allprojects {
     group = "ru.vikulinva.customer"

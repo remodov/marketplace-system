@@ -2,7 +2,7 @@ spring:
   application:
     name: catalog
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/catalog}
+    url: ${DB_URL:jdbc:postgresql://localhost:5438/catalog}
     username: ${DB_USER:catalog}
     password: ${DB_PASSWORD:catalog}
     hikari:

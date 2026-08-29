@@ -74,7 +74,7 @@ public abstract class PlatformBaseIntegrationTest {
     @DynamicPropertySource
     static void registerProps(DynamicPropertyRegistry registry) {
         // Postgres из docker-compose (порт 5433 по yml)
-        registry.add("spring.datasource.url", () -> "jdbc:postgresql://localhost:5433/notifications");
+        registry.add("spring.datasource.url", () -> "jdbc:postgresql://localhost:5435/notifications");
         registry.add("spring.datasource.username", () -> "notifications");
         registry.add("spring.datasource.password", () -> "notifications");
         registry.add("clients.customer-bff.base-url", () -> "http://localhost:" + CUSTOMER_BFF_PORT);

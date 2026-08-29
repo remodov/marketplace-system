@@ -2,7 +2,7 @@ spring:
   application:
     name: backoffice
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5433/backoffice}
+    url: ${DB_URL:jdbc:postgresql://localhost:5436/backoffice}
     username: ${DB_USER:backoffice}
     password: ${DB_PASSWORD:backoffice}
     hikari:

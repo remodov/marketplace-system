@@ -3,7 +3,7 @@
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5433/notifications
+    url: jdbc:postgresql://localhost:5435/notifications
     username: notifications
     password: notifications
   kafka:

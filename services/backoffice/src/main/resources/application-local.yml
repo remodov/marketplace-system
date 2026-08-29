@@ -2,7 +2,7 @@
 # Сервис стартует без живого Keycloak — security в local profile = permitAll (см. LocalSecurityConfig).
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5433/backoffice
+    url: jdbc:postgresql://localhost:5436/backoffice
     username: backoffice
     password: backoffice
   liquibase:

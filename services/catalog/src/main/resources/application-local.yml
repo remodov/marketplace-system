@@ -2,7 +2,7 @@
 # Сервис стартует без живого Keycloak — security в local profile = permitAll (см. LocalSecurityConfig).
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/catalog
+    url: jdbc:postgresql://localhost:5438/catalog
     username: catalog
     password: catalog
   liquibase:

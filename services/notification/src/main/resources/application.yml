@@ -2,7 +2,7 @@ spring:
   application:
     name: notification-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/notifications
+    url: jdbc:postgresql://localhost:5435/notifications
     username: notifications
     password: notifications
     hikari:
