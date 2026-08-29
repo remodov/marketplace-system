@@ -31,9 +31,9 @@ class ProductPriceFilterTest {
     @BeforeEach
     void fillCatalog() {
         repository.deleteAll();
+        service.create("Механическая клавиатура", new BigDecimal("5400.00"), 2);
         service.create("Коврик для мыши", new BigDecimal("450.00"), 10);
         service.create("Беспроводная мышь", new BigDecimal("1990.00"), 5);
-        service.create("Механическая клавиатура", new BigDecimal("5400.00"), 2);
     }
 
     @Test
