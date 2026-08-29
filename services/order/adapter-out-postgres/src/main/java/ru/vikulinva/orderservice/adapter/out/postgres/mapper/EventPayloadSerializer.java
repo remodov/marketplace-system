@@ -8,6 +8,9 @@ import ru.vikulinva.ddd.DomainEvent;
 
 /**
  * Сериализация {@link DomainEvent} → {@link JSONB} для записи в outbox.
+ *
+ * <p>Мэппер собственный, а не общий бин приложения: во внешнем событии свои
+ * правила — см. {@link ExternalContractModule}.
  */
 @Component
 public class EventPayloadSerializer {
@@ -15,7 +18,7 @@ public class EventPayloadSerializer {
     private final ObjectMapper objectMapper;
 
     public EventPayloadSerializer(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
+        this.objectMapper = objectMapper.copy().registerModule(new ExternalContractModule());
     }
 
     public JSONB toPayload(DomainEvent event) {
