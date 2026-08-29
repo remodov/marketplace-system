@@ -38,30 +38,18 @@ public class QueryUnderstanding {
         this.objectMapper = objectMapper;
     }
 
-    @Cacheable(cacheNames = "nl-queries", key = "#query")
+    // TODO Б2: превратить фразу в фильтры.
+    // Три вещи обязательны, иначе это нельзя выпускать: одна и та же фраза не
+    // должна ходить к модели дважды; лежащий провайдер не должен ломать поиск;
+    // ответ модели разбирается оборонительно — она вернёт не то, что обещала,
+    // ровно тогда, когда этого не ждут.
     public SearchFilters understand(String query) {
-        LlmClient client = llm.getIfAvailable();
-        if (client == null) {
-            return SearchFilters.plainText(query);
-        }
-        try {
-            return parse(client.complete(PROMPT.formatted(query)), query);
-        } catch (RuntimeException e) {
-            log.warn("Разбор запроса не удался, ищем как есть: {}", e.toString());
-            return SearchFilters.plainText(query);
-        }
+        return SearchFilters.plainText(query);
     }
 
+    // TODO Б2: разбор ответа модели. Поля описаны в промпте — но обещание модели
+    // не гарантия: она отвечает текстом, а не типом.
     private SearchFilters parse(String answer, String original) {
-        try {
-            JsonNode node = objectMapper.readTree(answer);
-            String text = node.hasNonNull("text") ? node.get("text").asText() : original;
-            BigDecimal maxPrice = node.hasNonNull("maxPrice") ? node.get("maxPrice").decimalValue() : null;
-            boolean inStockOnly = node.hasNonNull("inStockOnly") && node.get("inStockOnly").asBoolean();
-            return new SearchFilters(text.isBlank() ? original : text, maxPrice, inStockOnly);
-        } catch (Exception e) {
-            log.warn("Модель вернула не JSON, ищем как есть");
-            return SearchFilters.plainText(original);
-        }
+        return SearchFilters.plainText(original);
     }
 }
