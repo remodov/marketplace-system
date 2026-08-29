@@ -1,0 +1,13 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: payment
+  datasource:
+    url: jdbc:postgresql://localhost:5437/payment
+    username: payment
+    password: payment
+  sql:
+    init:
+      mode: always

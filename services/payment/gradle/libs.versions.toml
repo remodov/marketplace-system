@@ -1,0 +1,89 @@
+[versions]
+java = "21"
+spring-boot = "3.4.1"
+spring-kafka = "3.3.1"
+spring-cloud = "2024.0.0"
+
+# Methodology libraries
+usecase-pattern = "1.1.0"
+ddd-building-blocks = "1.0.0"
+hexagonal-architecture = "1.0.0"
+
+# Persistence
+jooq = "3.19.15"
+liquibase = "4.31.0"
+postgresql = "42.7.4"
+hikaricp = "5.1.0"
+
+# Mapping & generation
+mapstruct = "1.6.3"
+openapi-generator = "7.10.0"
+
+# Resilience
+resilience4j = "2.2.0"
+
+# Observability
+micrometer = "1.14.2"
+opentelemetry = "1.45.0"
+
+# Tests
+junit-jupiter = "5.11.4"
+assertj = "3.27.0"
+mockito = "5.14.2"
+testcontainers = "1.20.4"
+wiremock = "3.10.0"
+archunit = "1.4.0"
+
+[libraries]
+# methodology
+usecase-pattern-core = { module = "ru.vikulinva:usecase-pattern", version.ref = "usecase-pattern" }
+usecase-pattern-starter = { module = "ru.vikulinva:usecase-pattern-starter", version.ref = "usecase-pattern" }
+ddd-building-blocks = { module = "ru.vikulinva:ddd-building-blocks", version.ref = "ddd-building-blocks" }
+hexagonal-architecture-core = { module = "ru.vikulinva:hexagonal-architecture-core", version.ref = "hexagonal-architecture" }
+hexagonal-architecture-test = { module = "ru.vikulinva:hexagonal-architecture-test", version.ref = "hexagonal-architecture" }
+
+# spring boot
+spring-boot-starter = { module = "org.springframework.boot:spring-boot-starter", version.ref = "spring-boot" }
+spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring-boot" }
+spring-boot-starter-jooq = { module = "org.springframework.boot:spring-boot-starter-jooq", version.ref = "spring-boot" }
+spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation", version.ref = "spring-boot" }
+spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator", version.ref = "spring-boot" }
+spring-boot-starter-cache = { module = "org.springframework.boot:spring-boot-starter-cache", version.ref = "spring-boot" }
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "spring-boot" }
+spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security", version.ref = "spring-boot" }
+spring-boot-starter-oauth2-resource-server = { module = "org.springframework.boot:spring-boot-starter-oauth2-resource-server", version.ref = "spring-boot" }
+spring-kafka = { module = "org.springframework.kafka:spring-kafka", version.ref = "spring-kafka" }
+spring-boot-testcontainers = { module = "org.springframework.boot:spring-boot-testcontainers", version.ref = "spring-boot" }
+
+# persistence
+jooq = { module = "org.jooq:jooq", version.ref = "jooq" }
+liquibase-core = { module = "org.liquibase:liquibase-core", version.ref = "liquibase" }
+postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
+hikaricp = { module = "com.zaxxer:HikariCP", version.ref = "hikaricp" }
+
+# mapping
+mapstruct = { module = "org.mapstruct:mapstruct", version.ref = "mapstruct" }
+mapstruct-processor = { module = "org.mapstruct:mapstruct-processor", version.ref = "mapstruct" }
+
+# resilience
+resilience4j-spring-boot3 = { module = "io.github.resilience4j:resilience4j-spring-boot3", version.ref = "resilience4j" }
+resilience4j-reactor = { module = "io.github.resilience4j:resilience4j-reactor", version.ref = "resilience4j" }
+
+# observability
+micrometer-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
+
+# tests
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit-jupiter" }
+assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
+testcontainers-postgres = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
+testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
+wiremock = { module = "org.wiremock:wiremock-standalone", version.ref = "wiremock" }
+wiremock-jetty12 = { module = "org.wiremock:wiremock-jetty12", version.ref = "wiremock" }
+archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
+
+[plugins]
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version = "1.1.7" }
+openapi-generator = { id = "org.openapi.generator", version.ref = "openapi-generator" }

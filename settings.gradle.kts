@@ -6,6 +6,7 @@ rootProject.name = "marketplace-system"
 includeBuild("services/catalog-starter")
 includeBuild("services/catalog")
 includeBuild("services/order")
+includeBuild("services/payment")
 includeBuild("services/customer")
 includeBuild("services/notification")
 includeBuild("services/backoffice")
