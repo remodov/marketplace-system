@@ -25,3 +25,13 @@ databaseChangeLog:
             tableName: products
             columns:
               - column: { name: reserved, type: int, defaultValueNumeric: 0, constraints: { nullable: false } }
+
+  - changeSet:
+      id: 003-products-title-trigram
+      author: practicum
+      dbms: postgresql
+      changes:
+        - sql:
+            sql: CREATE EXTENSION IF NOT EXISTS pg_trgm
+        - sql:
+            sql: CREATE INDEX idx_products_title_trgm ON products USING gin (title gin_trgm_ops)

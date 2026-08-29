@@ -8,3 +8,5 @@ spring:
       ddl-auto: create-drop
   liquibase:
     enabled: false
+  cache:
+    type: simple

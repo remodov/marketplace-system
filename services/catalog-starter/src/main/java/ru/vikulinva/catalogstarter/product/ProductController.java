@@ -30,14 +30,6 @@ public class ProductController {
         this.service = service;
     }
 
-    public record ProductView(UUID id, String title, BigDecimal price, int stock, int reserved, int available) {
-
-        static ProductView of(Product product) {
-            return new ProductView(product.getId(), product.getTitle(), product.getPrice(),
-                product.getStock(), product.getReserved(), product.available());
-        }
-    }
-
     public record CreateProductRequest(@NotBlank String title,
                                        @Positive BigDecimal price,
                                        @PositiveOrZero int stock) {
@@ -56,40 +48,40 @@ public class ProductController {
     }
 
     @GetMapping
-    public List<ProductView> search(@RequestParam(required = false) String query,
+    public List<ProductCard> search(@RequestParam(required = false) String query,
                                     @RequestParam(required = false) BigDecimal maxPrice) {
         List<Product> found = maxPrice == null ? service.search(query) : service.cheaperThan(maxPrice);
-        return found.stream().map(ProductView::of).toList();
+        return found.stream().map(ProductCard::of).toList();
     }
 
     @GetMapping("/{id}")
-    public ProductView byId(@PathVariable UUID id) {
-        return ProductView.of(service.byId(id));
+    public ProductCard byId(@PathVariable UUID id) {
+        return service.card(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ProductView create(@Valid @RequestBody CreateProductRequest request) {
-        return ProductView.of(service.create(request.title(), request.price(), request.stock()));
+    public ProductCard create(@Valid @RequestBody CreateProductRequest request) {
+        return ProductCard.of(service.create(request.title(), request.price(), request.stock()));
     }
 
     @PatchMapping("/{id}/price")
-    public ProductView changePrice(@PathVariable UUID id, @Valid @RequestBody ChangePriceRequest request) {
-        return ProductView.of(service.changePrice(id, request.price()));
+    public ProductCard changePrice(@PathVariable UUID id, @Valid @RequestBody ChangePriceRequest request) {
+        return ProductCard.of(service.changePrice(id, request.price()));
     }
 
     @PatchMapping("/{id}/discount")
-    public ProductView applyDiscount(@PathVariable UUID id, @Valid @RequestBody ApplyDiscountRequest request) {
-        return ProductView.of(service.applyDiscount(id, request.percent()));
+    public ProductCard applyDiscount(@PathVariable UUID id, @Valid @RequestBody ApplyDiscountRequest request) {
+        return ProductCard.of(service.applyDiscount(id, request.percent()));
     }
 
     @PatchMapping("/{id}/stock")
-    public ProductView changeStock(@PathVariable UUID id, @Valid @RequestBody ChangeStockRequest request) {
-        return ProductView.of(service.changeStock(id, request.delta()));
+    public ProductCard changeStock(@PathVariable UUID id, @Valid @RequestBody ChangeStockRequest request) {
+        return ProductCard.of(service.changeStock(id, request.delta()));
     }
 
     @PostMapping("/{id}/reserve")
-    public ProductView reserve(@PathVariable UUID id, @Valid @RequestBody ReserveRequest request) {
-        return ProductView.of(service.reserve(id, request.quantity()));
+    public ProductCard reserve(@PathVariable UUID id, @Valid @RequestBody ReserveRequest request) {
+        return ProductCard.of(service.reserve(id, request.quantity()));
     }
 }
