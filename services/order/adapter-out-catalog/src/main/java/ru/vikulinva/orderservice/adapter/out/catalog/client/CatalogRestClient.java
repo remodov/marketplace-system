@@ -40,8 +40,8 @@ public class CatalogRestClient implements CatalogPort {
     }
 
     @Override
-    @CircuitBreaker(name = INSTANCE, fallbackMethod = "fallback")
-    @Retry(name = INSTANCE)
+    @CircuitBreaker(name = INSTANCE)
+    @Retry(name = INSTANCE, fallbackMethod = "fallback")
     public Map<ProductId, Money> getPrices(List<ProductId> productIds) {
         Map<ProductId, Money> prices = new HashMap<>(productIds.size());
         for (ProductId productId : productIds) {
@@ -68,7 +68,12 @@ public class CatalogRestClient implements CatalogPort {
         }
     }
 
-    /** Fallback при открытом circuit breaker / отказе сетевого вызова. */
+    /**
+     * Подстраховка после исчерпанных повторов и при открытом размыкателе.
+     * Висит на @Retry, а не на @CircuitBreaker: повтор — внешний аспект, и
+     * подстраховка на внутреннем срабатывала бы раньше, чем повтор успел бы
+     * что-то повторить.
+     */
     @SuppressWarnings("unused")
     private Map<ProductId, Money> fallback(List<ProductId> productIds, Throwable t) {
         if (t instanceof ProductNotFoundException pnf) {
