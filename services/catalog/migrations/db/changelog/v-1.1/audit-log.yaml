@@ -1,0 +1,50 @@
+databaseChangeLog:
+  - changeSet:
+      id: v-1.1-create-catalog-audit-log
+      author: catalog-team
+      context: production
+      changes:
+        - createTable:
+            tableName: catalog_audit_log
+            remarks: 'Аудит admin-команд: actor, action, target product, метаданные перехода'
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: actor_id
+                  type: uuid
+                  constraints: { nullable: false }
+                  remarks: 'sellerId/adminId инициатора (jwt.sub)'
+              - column:
+                  name: action
+                  type: varchar(64)
+                  constraints: { nullable: false }
+                  remarks: 'PRODUCT_PUBLISHED | PRODUCT_HIDDEN | ...'
+              - column:
+                  name: product_id
+                  type: uuid
+                  constraints: { nullable: false }
+              - column:
+                  name: occurred_at
+                  type: timestamptz
+                  constraints: { nullable: false }
+                  defaultValueComputed: now()
+              - column:
+                  name: metadata
+                  type: jsonb
+                  constraints: { nullable: false }
+                  defaultValueComputed: "'{}'::jsonb"
+        - createIndex:
+            tableName: catalog_audit_log
+            indexName: idx_catalog_audit_log_product_id
+            columns:
+              - column: { name: product_id }
+        - createIndex:
+            tableName: catalog_audit_log
+            indexName: idx_catalog_audit_log_actor_id
+            columns:
+              - column: { name: actor_id }

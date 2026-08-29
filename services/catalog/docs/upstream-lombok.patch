@@ -1,0 +1,173 @@
+--- /tmp/ucp-upstream/docs/java-style-guide.md	2026-04-28 08:59:26
++++ /Users/vva/IdeaProjects/catalog/docs/java-style-guide.md	2026-04-28 08:57:23
+@@ -255,9 +255,84 @@
+ public class Entity {
+     public String name;                 // AVOID — выравнивание тратит время в diff
+     public int    age;
++}
++```
++
++---
++
++## 6. Lombok
++
++Lombok применяется во всех модулях по умолчанию — он убирает шум boilerplate-конструкторов и логгеров, не меняя видимой семантики. Правила ниже — обязательные.
++
++### `JS-6.1` `@RequiredArgsConstructor` на всех Spring-бинах с DI
++
++Любой `@Component` / `@Service` / `@Repository` / `@RestController` / `@Configuration` с DI-полями — `@RequiredArgsConstructor` + `private final` поля. Явный `public Foo(Bar bar) { this.bar = bar; }` не пишем.
++
++```java
++@Component
++@RequiredArgsConstructor
++public class CreateOrderUseCaseHandler implements UseCaseHandler<CreateOrderUseCase, OrderDto> {
++    private final OrderRepository orders;
++    private final DateTimeService dateTimeService;
++    private final UuidGenerator uuidGenerator;
++    // ... handle(...)
++}
++```
++
++Это перекрывает R-HND-5 из `usecase-pattern-style-guide.md`: Lombok — default, явный constructor — только для нестандартных кейсов (например, если нужно валидировать DI-аргументы или вызвать `super(...)`).
++
++### `JS-6.2` `@Slf4j` вместо ручного логгера
++
++```java
++@Slf4j
++@Component
++public class FooService { /* log.info(...) */ }
++```
++
++Не пишем `private static final Logger log = LoggerFactory.getLogger(FooService.class);` — это шум.
++
++### `JS-6.3` `@Getter` на custom exceptions и value-objects, которые не records
++
++Когда исключение несёт payload-поля (`productId`, `from`, `to`), accessor-методы — через `@Getter`, не руками. Если accessor нужен в record-стиле (без `get`-префикса) — оставляем явный, но не дублируем `@Getter`.
++
++```java
++@Getter
++public class InvalidStateTransitionException extends RuntimeException {
++    private final ProductStatus from;
++    private final ProductStatus to;
++    public InvalidStateTransitionException(ProductStatus from, ProductStatus to) {
++        super("Invalid transition: " + from + " -> " + to);
++        this.from = from;
++        this.to = to;
++    }
+ }
+ ```
+ 
++### `JS-6.4` Lombok **не** на records
++
++Records уже дают immutable ctor / accessors / `equals` / `hashCode` / `toString`. `@Value`, `@Data`, `@AllArgsConstructor` поверх record — мусор и компилятор ругается.
++
++### `JS-6.5` `@Data` запрещён в производственном коде
++
++`@Data` генерирует mutable setters + equals/hashCode по всем полям — это две диверсии в одном: оно ломает неизменяемость и делает entity сравнимыми по `id` равных в коллекциях, что приводит к багам в `Set`-ах и JPA-кешах. Нужен POJO с геттерами/сеттерами для legacy-биндинга — пишем `@Getter @Setter` явно. Для иммутабельных DTO — record (см. `JS-6.4`).
++
++### `JS-6.6` Build-настройка одинакова во всех модулях
++
++```kotlin
++compileOnly("org.projectlombok:lombok:1.18.34")
++annotationProcessor("org.projectlombok:lombok:1.18.34")
++testCompileOnly("org.projectlombok:lombok:1.18.34")
++testAnnotationProcessor("org.projectlombok:lombok:1.18.34")
++```
++
++Версия фиксируется в `gradle/libs.versions.toml` (если используется). `lombok` НЕ в `implementation` — это compile-time-only зависимость, не должна попасть в runtime classpath.
++
++### `JS-6.7` `@Builder` — точечно, не везде
++
++`@Builder` уместен на сложных DTO с 5+ полями и опциональными значениями (например, исходящие запросы во внешний API, настройки). Не вешаем его на каждый POJO «на всякий случай» — это раздувает API класса.
++
++`@Builder` запрещён на entity / aggregate root: построение агрегата идёт через named-конструкторы (`Order.draft(...)`, `Order.fromPersistence(...)`), Lombok-builder делает это бесконтрольно и обходит инварианты.
++
+ ---
+ 
+ ## Настройка IDE (IntelliJ IDEA)
+@@ -280,3 +355,4 @@
+ | Импорты | `JS-3.1`, `JS-3.2` |
+ | Выражения | `JS-4.1`–`JS-4.7` |
+ | Отступы | `JS-5.1`–`JS-5.3` |
++| Lombok | `JS-6.1`–`JS-6.7` |
+--- /tmp/ucp-upstream/docs/usecase-pattern-style-guide.md	2026-04-28 08:59:26
++++ /Users/vva/IdeaProjects/catalog/docs/usecase-pattern-style-guide.md	2026-04-28 08:57:30
+@@ -84,8 +84,11 @@
+ - **R-HND-4.** Один Handler — один UseCase. Не делать «универсальных»
+   handler-ов на несколько UseCase.
+ - **R-HND-5.** Все внешние зависимости (репозитории, мапперы,
+-  внешние API) приходят через конструктор (`@RequiredArgsConstructor` или
+-  явный `final` constructor).
++  внешние API) приходят через конструктор. **Default — `@RequiredArgsConstructor`**
++  + `private final` поля (см. `JS-6.1` в `java-style-guide.md`). Явный
++  `public Foo(Bar bar)`-constructor допустим только в нестандартных
++  кейсах: валидация DI-аргументов в теле конструктора, вызов
++  `super(...)`, нетривиальная инициализация поля.
+ 
+ ### 4.2 Запрещено
+ 
+--- /tmp/ucp-upstream/.claude/skills/ucp-pattern-design/SKILL.md	2026-04-28 08:59:26
++++ /Users/vva/IdeaProjects/catalog/.claude/skills/ucp-pattern-design/SKILL.md	2026-04-28 08:58:13
+@@ -29,10 +29,10 @@
+    - Cross-cutting needs: idempotency, auth context, async vs sync, batch.
+    - If Level 3+: which aggregate is touched, which invariants must hold, what events are emitted.
+ 
+-5. **Produce the code.** Write complete Java files (Java 21+):
++5. **Produce the code.** Write complete Java files (Java 21+). **Lombok-defaults обязательны** (`JS-6.1`–`JS-6.7` в `java-style-guide.md`): `@RequiredArgsConstructor` на каждом Spring-бине с DI, `@Slf4j` вместо ручного `Logger`, `@Getter` на доменных исключениях с payload-полями. Lombok **не** навешиваем на records.
+ 
+    - **`<Operation>UseCase`** — `record` implementing `UseCase<R>` (Level 1) or `UseCaseCommand<R>` / `UseCaseQuery<R>` (Level 2+). Immutable, no logic.
+-   - **`<Operation>UseCaseHandler`** — `@Component`, implements `UseCaseHandler<MyUseCase, R>`, returns `MyUseCase.class` from `useCaseType()`, has `@Transactional` (or `readOnly = true`), constructor injection. Logic stays here.
++   - **`<Operation>UseCaseHandler`** — `@Component` + `@RequiredArgsConstructor`, implements `UseCaseHandler<MyUseCase, R>`, returns `MyUseCase.class` from `useCaseType()`, has `@Transactional` (or `readOnly = true`). Поля — `private final`, без явного constructor'а. Logic stays here.
+    - **Controller method** — `@RestController` method that maps the request into the `UseCase`, calls `useCaseDispatcher.dispatch(...)`, returns the result. No business logic.
+    - **Mapper** (if a new mapping is needed) — MapStruct interface annotated `@Mapper(componentModel = SPRING)`.
+    - **(Level 3+)** **Domain pieces** — only if the operation actually requires new aggregate state, value object, or event. Follow `ddd-tactical-style-guide.md`. If the operation is pure read, prefer a Read Model and skip the aggregate.
+@@ -40,11 +40,12 @@
+ 
+ 6. **Self-review before presenting.** Walk through these checks (style-guide §12):
+    - UseCase is record/final, no logic, name = business operation.
+-   - Handler is `@Component`, returns useCaseType, transactional.
++   - Handler is `@Component` + `@RequiredArgsConstructor`, returns useCaseType, transactional.
+    - Controller calls only `UseCaseDispatcher`.
+    - On Level 2+, the right CQRS marker is used, query handler has `readOnly = true`.
+    - Layer models are not mixed (JsonBean ≠ Pojo ≠ Domain).
+    - On Level 4, `core/` does not import Spring / jOOQ / REST / Kafka.
++   - Lombok: `@RequiredArgsConstructor` на каждом бине; `@Slf4j` если нужны логи; явных multi-arg constructor'ов нет (`JS-6.1`).
+ 
+ 7. **Output structure:**
+    1. Detected level + one-paragraph design summary (operation, command/query, side effects, events).
+--- /tmp/ucp-upstream/.claude/skills/ucp-bootstrap-design/SKILL.md	2026-04-28 08:59:26
++++ /Users/vva/IdeaProjects/catalog/.claude/skills/ucp-bootstrap-design/SKILL.md	2026-04-28 08:58:32
+@@ -81,6 +81,15 @@
+    ```
+    Plus the matrix of profiles (BS-2). If the README doesn't say which profile to use for local dev, the next dev to clone this repo will spend an hour debugging a JWK-fetch failure.
+ 
++11. **Lombok — обязателен в build с самого старта** (см. `JS-6.6` в `java-style-guide.md`). Прописать в `build.gradle.kts` каждого модуля (или в `subprojects { ... }`):
++   ```kotlin
++   compileOnly("org.projectlombok:lombok:1.18.34")
++   annotationProcessor("org.projectlombok:lombok:1.18.34")
++   testCompileOnly("org.projectlombok:lombok:1.18.34")
++   testAnnotationProcessor("org.projectlombok:lombok:1.18.34")
++   ```
++   Без этого `ucp-pattern-design` упадёт на компиляции, потому что генерит `@RequiredArgsConstructor`-handler'ы (`JS-6.1`).
++
+ ## Output
+ 
+ Produce concrete files (Java + YAML) and a short PR description that lists:
+--- /tmp/ucp-upstream/.claude/skills/ucp-test-design/SKILL.md	2026-04-28 08:59:26
++++ /Users/vva/IdeaProjects/catalog/.claude/skills/ucp-test-design/SKILL.md	2026-04-28 08:59:01
+@@ -35,13 +35,14 @@
+ 
+ 4. **Создай `<Domain>DatabasePreparer`** (`TS-9`–`TS-11`):
+ 
+-   - `@Component`, обёртка над `DSLContext`, поле `List<Runnable> preparers = new ArrayList<>()`.
++   - `@Component` + `@RequiredArgsConstructor` (`JS-6.1`), обёртка над `DSLContext`, поле `private final DSLContext dsl;` + `private final List<Runnable> preparers = new ArrayList<>();`.
+    - Методы трёх групп:
+      - `clear<Table>()` — `dsl.deleteFrom(<TABLE>).execute()`.
+      - `create<Entity>(<Pojo>)` — insert через `dsl.insertInto(...).set(dsl.newRecord(<TABLE>, pojo)).execute()`.
+      - `prepare()` — `preparers.forEach(Runnable::run); preparers.clear();`.
+    - Не пересоздавай схему, только `DELETE`.
+    - Учти порядок FK: при чистке — зависимые сначала; при создании — родительские сначала.
++   - Lombok в test-scope тоже: `testCompileOnly` + `testAnnotationProcessor` (`JS-6.6`). Скилл `ucp-bootstrap-design` это уже прописал в build.
+ 
+ 5. **Создай `<Entity>TestObjectGenerator`** для каждой POJO, на которую опирается тест (`TS-12`–`TS-14`):
+ 

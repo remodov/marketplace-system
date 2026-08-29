@@ -1,0 +1,56 @@
+# Gradle
+.gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+/out/
+
+# Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local config
+.env
+.env.local
+local-data/
+
+# JOOQ generated (если будем подключать на Tier B)
+**/generated/
+
+# Claude Code dev-machine symlinks (skills/docs are project-local symlinks to ../usecase-pattern-skills)
+/.claude/
+/docs/auth-patterns-style-guide.md
+/docs/ddd-tactical-style-guide.md
+/docs/java-style-guide.md
+/docs/rest-api-style-guide.md
+/docs/spring-bootstrap-style-guide.md
+/docs/test-strategy.md
+/docs/usecase-pattern-style-guide.md
+/docs/usecase-spec-template.md
+
+# BEGIN ucp-skills (managed by claude-code-java/install.sh)
+# Папки .claude/docs/ и .claude/agents/ принадлежат install.sh целиком —
+# свои файлы туда не клади (.claude/skills/ остаётся открытым для custom-скиллов).
+.claude/skills/ucp-*
+.claude/docs/
+.claude/agents/
+# END ucp-skills
+.factorypath

@@ -1,0 +1,17 @@
+# BS-2/BS-4: только overrides относительно application.yml.
+# Сервис стартует без живого Keycloak — security в local profile = permitAll (см. LocalSecurityConfig).
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/catalog
+    username: catalog
+    password: catalog
+  liquibase:
+    contexts: production
+  # BS-13: Kafka не используется на Tier B Catalog'а; флаг оставлен на случай будущего consumer-bean.
+  kafka:
+    listener:
+      auto-startup: false
+
+logging:
+  level:
+    org.jooq: INFO

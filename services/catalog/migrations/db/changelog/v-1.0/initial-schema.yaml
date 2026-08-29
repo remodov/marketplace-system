@@ -1,0 +1,71 @@
+databaseChangeLog:
+  - changeSet:
+      id: v-1.0-create-product-status-enum
+      author: catalog-team
+      context: production
+      changes:
+        - sql:
+            sql: "CREATE TYPE product_status AS ENUM ('DRAFT','PUBLISHED','HIDDEN')"
+            rollback: "DROP TYPE product_status"
+
+  - changeSet:
+      id: v-1.0-create-products-table
+      author: catalog-team
+      context: production
+      changes:
+        - createTable:
+            tableName: products
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: title
+                  type: varchar(255)
+                  constraints: { nullable: false }
+              - column:
+                  name: description
+                  type: text
+              - column:
+                  name: price
+                  type: numeric(15, 2)
+                  constraints: { nullable: false }
+              - column:
+                  name: currency
+                  type: varchar(3)
+                  constraints: { nullable: false }
+                  defaultValue: RUB
+              - column:
+                  name: seller_id
+                  type: uuid
+                  constraints: { nullable: false }
+              - column:
+                  name: status
+                  type: product_status
+                  constraints: { nullable: false }
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  constraints: { nullable: false }
+                  defaultValueComputed: now()
+              - column:
+                  name: updated_at
+                  type: timestamptz
+                  constraints: { nullable: false }
+                  defaultValueComputed: now()
+        - sql:
+            sql: "ALTER TABLE products ADD CONSTRAINT products_price_positive CHECK (price > 0)"
+            rollback: "ALTER TABLE products DROP CONSTRAINT products_price_positive"
+        - createIndex:
+            tableName: products
+            indexName: idx_products_seller_id
+            columns:
+              - column: { name: seller_id }
+        - createIndex:
+            tableName: products
+            indexName: idx_products_status
+            columns:
+              - column: { name: status }
