@@ -45,11 +45,8 @@ public class ProductController {
     public record ReserveRequest(@Positive int quantity) {
     }
 
-    public record ChangePriceRequest(@NotNull @Positive BigDecimal price) {
-    }
-
-    public record ChangeStockRequest(@NotNull Integer delta) {
-    }
+    // TODO шаг 3: тела запросов на смену цены и остатка.
+    // Проверки входа вешаются здесь аннотациями, доменные правила — в сущности.
 
     @GetMapping
     public List<ProductView> search(@RequestParam(required = false) String query,
@@ -69,15 +66,8 @@ public class ProductController {
         return ProductView.of(service.create(request.title(), request.price(), request.stock()));
     }
 
-    @PatchMapping("/{id}/price")
-    public ProductView changePrice(@PathVariable UUID id, @Valid @RequestBody ChangePriceRequest request) {
-        return ProductView.of(service.changePrice(id, request.price()));
-    }
-
-    @PatchMapping("/{id}/stock")
-    public ProductView changeStock(@PathVariable UUID id, @Valid @RequestBody ChangeStockRequest request) {
-        return ProductView.of(service.changeStock(id, request.delta()));
-    }
+    // TODO шаг 3: PATCH /products/{id}/price и PATCH /products/{id}/stock.
+    // Метод выбран не случайно: меняется часть товара, а не товар целиком.
 
     @PostMapping("/{id}/reserve")
     public ProductView reserve(@PathVariable UUID id, @Valid @RequestBody ReserveRequest request) {

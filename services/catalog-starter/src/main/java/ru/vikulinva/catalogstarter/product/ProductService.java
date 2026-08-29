@@ -38,19 +38,9 @@ public class ProductService {
         return repository.save(new Product(UUID.randomUUID(), title, price, stock));
     }
 
-    @Transactional
-    public Product changePrice(UUID id, BigDecimal newPrice) {
-        Product product = byId(id);
-        product.changePrice(newPrice);
-        return product;
-    }
-
-    @Transactional
-    public Product changeStock(UUID id, int delta) {
-        Product product = byId(id);
-        product.changeStock(delta);
-        return product;
-    }
+    // TODO шаг 3: два сценария изменения — цена и остаток.
+    // Посмотри на reserve ниже: найти, позвать метод сущности, вернуть.
+    // Сохранять явно не нужно — почему, стоит понять до того, как писать.
 
     @Transactional
     public Product reserve(UUID id, int quantity) {
