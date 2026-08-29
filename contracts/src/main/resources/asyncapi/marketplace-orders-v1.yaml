@@ -1,0 +1,164 @@
+asyncapi: 3.0.0
+
+info:
+  title: Marketplace · события заказа
+  version: 1.0.0
+  description: |
+    Внешний контракт событий Order Service. Публикуется через outbox, читают
+    Notification и Payment.
+
+    Контракт намеренно плоский: во внешнее событие не протекают внутренние
+    value object сервиса. Раньше `customerId` уезжал в Kafka как
+    `{"customerId":{"value":"..."}}` — Notification читал его строкой и падал,
+    адресат уведомления не определялся вовсе.
+
+servers:
+  local:
+    host: localhost:9092
+    protocol: kafka
+
+channels:
+  orders:
+    address: marketplace.orders.v1
+    description: События жизненного цикла заказа. Ключ сообщения — идентификатор заказа.
+    messages:
+      OrderCreated:
+        $ref: '#/components/messages/OrderCreated'
+      OrderPaid:
+        $ref: '#/components/messages/OrderPaid'
+      OrderCancelled:
+        $ref: '#/components/messages/OrderCancelled'
+      DisputeOpened:
+        $ref: '#/components/messages/DisputeOpened'
+      OrderConfirmed:
+        $ref: '#/components/messages/OrderConfirmed'
+      OrderShipped:
+        $ref: '#/components/messages/OrderShipped'
+      OrderDelivered:
+        $ref: '#/components/messages/OrderDelivered'
+      OrderCompleted:
+        $ref: '#/components/messages/OrderCompleted'
+      OrderExpired:
+        $ref: '#/components/messages/OrderExpired'
+      DisputeResolved:
+        $ref: '#/components/messages/DisputeResolved'
+
+operations:
+  publishOrderEvents:
+    action: send
+    channel:
+      $ref: '#/channels/orders'
+    description: Order Service публикует события из outbox.
+
+  consumeOrderEvents:
+    action: receive
+    channel:
+      $ref: '#/channels/orders'
+    description: Notification рассылает уведомления, Payment создаёт платёжное намерение.
+
+components:
+  messageTraits:
+    eventHeaders:
+      headers:
+        type: object
+        required: [event-id, event-type, event-version, aggregate-type, aggregate-id]
+        properties:
+          event-id:
+            type: string
+            format: uuid
+            description: Идентификатор события; по нему консьюмер отсекает повторы.
+          event-type:
+            type: string
+            description: Тип события, например OrderCreated.
+          event-version:
+            type: string
+          aggregate-type:
+            type: string
+          aggregate-id:
+            type: string
+            format: uuid
+
+  messages:
+    OrderCreated:
+      name: OrderCreated
+      title: Заказ создан
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/eventHeaders'
+      payload:
+        $ref: '../schemas/order-events.yaml#/components/schemas/OrderCreatedPayload'
+
+    OrderPaid:
+      name: OrderPaid
+      title: Заказ оплачен
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/eventHeaders'
+      payload:
+        $ref: '../schemas/order-events.yaml#/components/schemas/OrderPaidPayload'
+
+    OrderCancelled:
+      name: OrderCancelled
+      title: Заказ отменён
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/eventHeaders'
+      payload:
+        $ref: '../schemas/order-events.yaml#/components/schemas/OrderCancelledPayload'
+
+    DisputeOpened:
+      name: DisputeOpened
+      title: Открыт спор по заказу
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/eventHeaders'
+      payload:
+        $ref: '../schemas/order-events.yaml#/components/schemas/DisputeOpenedPayload'
+
+    OrderConfirmed:
+      name: OrderConfirmed
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/eventHeaders'
+      payload:
+        $ref: '../schemas/order-events.yaml#/components/schemas/OrderConfirmedPayload'
+
+    OrderShipped:
+      name: OrderShipped
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/eventHeaders'
+      payload:
+        $ref: '../schemas/order-events.yaml#/components/schemas/OrderShippedPayload'
+
+    OrderDelivered:
+      name: OrderDelivered
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/eventHeaders'
+      payload:
+        $ref: '../schemas/order-events.yaml#/components/schemas/OrderDeliveredPayload'
+
+    OrderCompleted:
+      name: OrderCompleted
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/eventHeaders'
+      payload:
+        $ref: '../schemas/order-events.yaml#/components/schemas/OrderCompletedPayload'
+
+    OrderExpired:
+      name: OrderExpired
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/eventHeaders'
+      payload:
+        $ref: '../schemas/order-events.yaml#/components/schemas/OrderExpiredPayload'
+
+    DisputeResolved:
+      name: DisputeResolved
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/eventHeaders'
+      payload:
+        $ref: '../schemas/order-events.yaml#/components/schemas/DisputeResolvedPayload'

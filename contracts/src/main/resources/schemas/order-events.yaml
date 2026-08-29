@@ -1,0 +1,84 @@
+openapi: 3.0.3
+info:
+  title: Marketplace · схемы событий заказа
+  version: 1.0.0
+  description: |
+    Один источник правды для полей событий. AsyncAPI-документ описывает каналы и
+    заголовки и ссылается сюда; по этому же файлу генерируются Java-классы,
+    поэтому продюсер и консьюмер компилируются против одних и тех же типов.
+
+    Поля плоские: во внешний контракт не протекают внутренние value object
+    сервиса. `customerId` — строка с UUID, а не `{"value": "..."}`.
+paths: {}
+components:
+  schemas:
+    OrderEventBase:
+      type: object
+      required: [orderId, customerId, sellerId, occurredAt]
+      properties:
+        orderId: { type: string, format: uuid }
+        customerId: { type: string, format: uuid }
+        sellerId: { type: string, format: uuid }
+        occurredAt: { type: string, format: date-time }
+    OrderCreatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/OrderEventBase'
+        - type: object
+          properties:
+            totalAmount: { type: string, description: Сумма десятичной строкой — деньги через double не гоняем. }
+            currency: { type: string, minLength: 3, maxLength: 3 }
+            itemsCount: { type: integer, format: int32 }
+    OrderConfirmedPayload:
+      allOf:
+        - $ref: '#/components/schemas/OrderEventBase'
+        - type: object
+          properties:
+            totalAmount: { type: string, description: Сумма десятичной строкой — деньги через double не гоняем. }
+            currency: { type: string, minLength: 3, maxLength: 3 }
+    OrderPaidPayload:
+      allOf:
+        - $ref: '#/components/schemas/OrderEventBase'
+        - type: object
+          properties:
+            totalAmount: { type: string, description: Сумма десятичной строкой — деньги через double не гоняем. }
+            currency: { type: string, minLength: 3, maxLength: 3 }
+            paymentId: { type: string, format: uuid }
+    OrderShippedPayload:
+      allOf:
+        - $ref: '#/components/schemas/OrderEventBase'
+        - type: object
+          properties:
+            trackingNumber: { type: string }
+    OrderDeliveredPayload:
+      allOf:
+        - $ref: '#/components/schemas/OrderEventBase'
+        - type: object
+    OrderCompletedPayload:
+      allOf:
+        - $ref: '#/components/schemas/OrderEventBase'
+        - type: object
+    OrderExpiredPayload:
+      allOf:
+        - $ref: '#/components/schemas/OrderEventBase'
+        - type: object
+    OrderCancelledPayload:
+      allOf:
+        - $ref: '#/components/schemas/OrderEventBase'
+        - type: object
+          properties:
+            previousStatus: { type: string }
+            reason: { type: string }
+            refundId: { type: string, format: uuid }
+    DisputeOpenedPayload:
+      allOf:
+        - $ref: '#/components/schemas/OrderEventBase'
+        - type: object
+          properties:
+            reason: { type: string, description: Адресат уведомления по спору — продавец. }
+    DisputeResolvedPayload:
+      allOf:
+        - $ref: '#/components/schemas/OrderEventBase'
+        - type: object
+          properties:
+            finalStatus: { type: string }
+            resolutionNote: { type: string }
