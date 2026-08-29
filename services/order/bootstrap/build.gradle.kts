@@ -27,6 +27,7 @@ dependencies {
     testImplementation(libs.spring.kafka)
     testImplementation("org.springframework.security:spring-security-test:6.4.2")
     testImplementation(project(":test-utils"))
+    testImplementation(libs.resilience4j.spring.boot3)
 }
 
 tasks.named<Jar>("jar") {

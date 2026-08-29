@@ -1,6 +1,7 @@
 package ru.vikulinva.orderservice.adapter.out.catalog;
 
 import com.github.tomakehurst.wiremock.http.Fault;
+import io.github.resilience4j.retry.RetryRegistry;
 import com.github.tomakehurst.wiremock.stubbing.Scenario;
 import org.jooq.DSLContext;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,6 +49,9 @@ class CatalogResilienceIntegrationTest extends PlatformBaseIntegrationTest {
     @Autowired
     private DSLContext dsl;
 
+    @Autowired
+    private RetryRegistry retryRegistry;
+
     private final CustomerId customerId = CustomerId.of(UUID.randomUUID());
     private final SellerId sellerId = SellerId.of(UUID.randomUUID());
     private final ProductId productId = ProductId.of(UUID.randomUUID());
@@ -81,11 +85,11 @@ class CatalogResilienceIntegrationTest extends PlatformBaseIntegrationTest {
     }
 
     @Test
-    @DisplayName("разовая пятисотка переживается повтором: заказ всё-таки создаётся")
+    @DisplayName("один зависший ответ переживается повтором: заказ создан, повтор виден в метриках")
     void singleFailure_isSurvivedByRetry() {
         catalog.stubFor(get(urlPathMatching(PRODUCTS)).inScenario(RETRY_SCENARIO)
             .whenScenarioStateIs(Scenario.STARTED)
-            .willReturn(aResponse().withStatus(503))
+            .willReturn(okJson(productJson()).withFixedDelay(2500))
             .willSetStateTo("recovered"));
         catalog.stubFor(get(urlPathMatching(PRODUCTS)).inScenario(RETRY_SCENARIO)
             .whenScenarioStateIs("recovered")
@@ -96,6 +100,9 @@ class CatalogResilienceIntegrationTest extends PlatformBaseIntegrationTest {
         assertThat(result.getId()).isNotNull();
         assertThat(dsl.fetchCount(ORDERS)).isEqualTo(1);
         catalog.verify(2, getRequestedFor(urlPathMatching(PRODUCTS)));
+        assertThat(retryRegistry.retry("catalog").getMetrics().getNumberOfSuccessfulCallsWithRetryAttempt())
+            .as("вызов, который удался только со второго захода")
+            .isEqualTo(1);
     }
 
     @Test
