@@ -24,14 +24,10 @@ public class RateLimiter {
     }
 
     public Decision check(String client) {
-        String key = "rate:" + client + ":" + (System.currentTimeMillis() / WINDOW.toMillis());
-        Long used = redis.opsForValue().increment(key);
-        if (used != null && used == 1L) {
-            redis.expire(key, WINDOW);
-        }
-        long count = used == null ? 1L : used;
-        long remaining = Math.max(0, properties.requestsPerMinute() - count);
-        return new Decision(count <= properties.requestsPerMinute(), remaining, WINDOW.toSeconds());
+        // TODO шаг 13: счётчик запросов клиента в текущем окне.
+        // Ключ должен сам протухать вместе с окном — чистить его отдельной job'ой
+        // не нужно. И считать надо на каждого клиента, а не на всех сразу.
+        return new Decision(true, properties.requestsPerMinute(), WINDOW.toSeconds());
     }
 
     public record Decision(boolean allowed, long remaining, long retryAfterSeconds) {}

@@ -36,23 +36,11 @@ public class OrderScreenService {
 
         List<Map<String, Object>> lines = (List<Map<String, Object>>) orderBody.getOrDefault("items", List.of());
 
-        CompletableFuture<List<OrderScreen.Item>> itemsFuture = CompletableFuture.supplyAsync(() -> {
-            List<CompletableFuture<OrderScreen.Item>> perItem = new ArrayList<>();
-            for (Map<String, Object> line : lines) {
-                perItem.add(CompletableFuture.supplyAsync(() -> toItem(line)));
-            }
-            return perItem.stream().map(CompletableFuture::join).toList();
-        });
-
-        CompletableFuture<String> paymentFuture = CompletableFuture.supplyAsync(() -> paymentStatus(orderId));
-
-        return new OrderScreen(
-            orderId,
-            String.valueOf(orderBody.get("status")),
-            new BigDecimal(String.valueOf(orderBody.getOrDefault("total", "0"))),
-            paymentFuture.join(),
-            itemsFuture.join()
-        );
+        // TODO шаг 13: собрать экран.
+        // Заказ уже прочитан — из него известны товары. Осталось добрать карточки
+        // товаров и статус платежа. Обрати внимание: эти два похода независимы,
+        // и экран не обязан ждать их по очереди.
+        throw new UnsupportedOperationException("Шаг 13: экран ещё не собирается");
     }
 
     @SuppressWarnings("unchecked")
