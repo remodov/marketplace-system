@@ -14,12 +14,10 @@ spec:
       labels:
         app: catalog-starter
     spec:
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 10001
+      # TODO шаг 15: контейнер не должен бежать от root.
       containers:
         - name: app
-          image: ghcr.io/remodov/catalog-starter:0.1.0
+          image: ghcr.io/remodov/catalog-starter:latest
           ports:
             - containerPort: 8082
           env:
@@ -27,29 +25,9 @@ spec:
               value: jdbc:postgresql://postgres-catalog-starter:5432/catalog_starter
             - name: REDIS_HOST
               value: redis
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 500m
-              memory: 512Mi
-          readinessProbe:
-            httpGet:
-              path: /actuator/health/readiness
-              port: 8082
-            initialDelaySeconds: 5
-            periodSeconds: 5
-          livenessProbe:
-            httpGet:
-              path: /actuator/health/liveness
-              port: 8082
-            initialDelaySeconds: 20
-            periodSeconds: 10
-          lifecycle:
-            preStop:
-              exec:
-                command: ["sh", "-c", "sleep 5"]
+          # TODO шаг 15: запросы и лимиты ресурсов, пробы готовности и живости,
+          # корректное завершение. Без проб кластер считает под готовым сразу,
+          # и первые запросы уходят в ещё не поднявшееся приложение.
 ---
 apiVersion: v1
 kind: Service

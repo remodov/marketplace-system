@@ -23,23 +23,5 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
 
-management:
-  prometheus:
-    metrics:
-      export:
-        enabled: true
-  endpoints:
-    web:
-      exposure:
-        include: health, info, metrics, prometheus
-  endpoint:
-    health:
-      probes:
-        enabled: true
-      show-details: when-authorized
-  metrics:
-    tags:
-      application: ${spring.application.name}
-  tracing:
-    sampling:
-      probability: 1.0
+# TODO шаг 15: наблюдаемость.
+# Кластеру нужны пробы, Prometheus — метрики, трассировке — сэмплирование.
