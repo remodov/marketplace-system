@@ -11,6 +11,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -62,10 +63,13 @@ class ProductChangeApiTest {
 
     @Test
     void priceOfUnknownProductIsNotFound() throws Exception {
-        mvc.perform(patch("/products/{id}/price", UUID.randomUUID())
+        UUID missing = UUID.randomUUID();
+
+        mvc.perform(patch("/products/{id}/price", missing)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"price\":100.00}"))
-            .andExpect(status().isNotFound());
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.detail", containsString(missing.toString())));
     }
 
     @Test
