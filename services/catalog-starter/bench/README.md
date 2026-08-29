@@ -4,14 +4,14 @@
 базе — на той, что поднимает стенд.
 
 ```bash
-docker compose -f ../../infra/compose.yaml up -d postgres-catalog redis
+docker compose -f ../../infra/compose.yaml up -d postgres-catalog-starter redis
 ../../gradlew :catalog-starter:bootRun
 ```
 
 Наполнить каталог и снять первое число:
 
 ```bash
-psql postgresql://catalog:catalog@localhost:5438/catalog -f bench/generate.sql
+psql postgresql://catalog:catalog@localhost:5439/catalog_starter -f bench/generate.sql
 bench/measure.sh "keychron модель 54321"
 ```
 
