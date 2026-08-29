@@ -47,5 +47,5 @@ SQL писать не нужно ни строчки: имя метода реп
 ## Материал
 
 - Spring Data JPA и репозитории: https://vikulin-va.ru/spring/data-jpa/
-- Транзакции: https://vikulin-va.ru/spring/transactions/
-- Проектирование REST: https://vikulin-va.ru/standards/backend/api-design/java/
+- Транзакции: https://vikulin-va.ru/spring/transactional/
+- Параметры запроса в REST: https://vikulin-va.ru/rest-api/query-params/
