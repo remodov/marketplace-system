@@ -39,6 +39,20 @@ public class ProductService {
     }
 
     @Transactional
+    public Product changePrice(UUID id, BigDecimal newPrice) {
+        Product product = byId(id);
+        product.changePrice(newPrice);
+        return product;
+    }
+
+    @Transactional
+    public Product changeStock(UUID id, int delta) {
+        Product product = byId(id);
+        product.changeStock(delta);
+        return product;
+    }
+
+    @Transactional
     public Product reserve(UUID id, int quantity) {
         Product product = byId(id);
         product.reserve(quantity);

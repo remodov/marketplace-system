@@ -2,10 +2,12 @@ package ru.vikulinva.catalogstarter.product;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -43,6 +45,12 @@ public class ProductController {
     public record ReserveRequest(@Positive int quantity) {
     }
 
+    public record ChangePriceRequest(@NotNull @Positive BigDecimal price) {
+    }
+
+    public record ChangeStockRequest(@NotNull Integer delta) {
+    }
+
     @GetMapping
     public List<ProductView> search(@RequestParam(required = false) String query,
                                     @RequestParam(required = false) BigDecimal maxPrice) {
@@ -59,6 +67,16 @@ public class ProductController {
     @ResponseStatus(HttpStatus.CREATED)
     public ProductView create(@Valid @RequestBody CreateProductRequest request) {
         return ProductView.of(service.create(request.title(), request.price(), request.stock()));
+    }
+
+    @PatchMapping("/{id}/price")
+    public ProductView changePrice(@PathVariable UUID id, @Valid @RequestBody ChangePriceRequest request) {
+        return ProductView.of(service.changePrice(id, request.price()));
+    }
+
+    @PatchMapping("/{id}/stock")
+    public ProductView changeStock(@PathVariable UUID id, @Valid @RequestBody ChangeStockRequest request) {
+        return ProductView.of(service.changeStock(id, request.delta()));
     }
 
     @PostMapping("/{id}/reserve")

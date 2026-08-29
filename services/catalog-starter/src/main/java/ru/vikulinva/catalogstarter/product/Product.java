@@ -54,6 +54,23 @@ public class Product {
         return stock;
     }
 
+    public void changePrice(BigDecimal newPrice) {
+        if (newPrice == null || newPrice.signum() <= 0) {
+            throw new IllegalArgumentException("Цена должна быть больше нуля");
+        }
+        this.price = newPrice;
+    }
+
+    public void changeStock(int delta) {
+        if (delta == 0) {
+            throw new IllegalArgumentException("Изменение остатка не может быть нулевым");
+        }
+        if (stock + delta < 0) {
+            throw new OutOfStockException(id, -delta, stock);
+        }
+        stock += delta;
+    }
+
     public void reserve(int quantity) {
         if (quantity <= 0) {
             throw new IllegalArgumentException("Количество должно быть больше нуля");
