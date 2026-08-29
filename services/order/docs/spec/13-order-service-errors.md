@@ -12,7 +12,7 @@ tags:
 
 ## 13. Каталог ошибок
 
-Формат — RFC 9457 ProblemDetails (`application/problem+json`). См. [REST API: ошибки](https://vikulin-va.ru/rest-api-style-guide/oshibki/).
+Формат — RFC 9457 ProblemDetails (`application/problem+json`). См. [REST API: ошибки](https://vikulin-va.ru/rest-api/errors/).
 
 | Код (`code`) | HTTP | Когда возникает | Возникает в (commands/UC) | Триггерует BR |
 |---|---|---|---|---|

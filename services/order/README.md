@@ -80,8 +80,8 @@ docs/spec/
 - [Use Case Pattern: методология](https://vikulin-va.ru/use-case-pattern/)
 - [Use Case спецификация: шаблон](https://vikulin-va.ru/use-case-pattern/spec-template/)
 - [Уровень зрелости 3: DDD](https://vikulin-va.ru/use-case-pattern/level-3/)
-- [Тактические паттерны DDD](https://vikulin-va.ru/domain-driven-design/tactical-patterns/)
-- [Распределённые паттерны](https://vikulin-va.ru/distributed-patterns/) (Outbox, Saga)
+- [Тактические паттерны DDD](https://vikulin-va.ru/ddd/03-tactical-patterns/)
+- [Распределённые паттерны](https://vikulin-va.ru/distributed-patterns-style-guide/) (Outbox, Saga)
 - Бизнес-кейс маркетплейса — [vikulin-va.ru/case/](https://vikulin-va.ru/case/)
 - Библиотеки:
   - [`usecase-pattern`](https://github.com/remodov/usecase-pattern) (UseCase + Handler + Dispatcher)
@@ -147,3 +147,11 @@ docker-compose up -d postgres
 ## Лицензия
 
 MIT.
+
+## Что почитать
+
+- [Order Service в кейсе](https://vikulin-va.ru/case/order-service/) — сценарии и границы.
+- [Тактический DDD](https://vikulin-va.ru/ddd/03-tactical-patterns/) — агрегат, событие, репозиторий.
+- [Сага](https://vikulin-va.ru/distributed-patterns-style-guide/saga/) и [компенсации](https://vikulin-va.ru/distributed-patterns-style-guide/compensation/) — оформление заказа без распределённой транзакции.
+- [Конечные автоматы](https://vikulin-va.ru/state-machines/) — статусы заказа.
+- [Kafka](https://vikulin-va.ru/kafka/) и [согласованность в конечном счёте](https://vikulin-va.ru/distributed-patterns-style-guide/eventual-consistency/).

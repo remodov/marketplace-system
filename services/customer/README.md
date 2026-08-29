@@ -57,3 +57,10 @@ config/                — checkstyle / spotbugs / dep-check suppressions
 ## UCP-методология
 
 См. [CLAUDE.md](CLAUDE.md) — все правки идут через `/ucp-*` скиллы. Спецификация — в [docs/spec/customer-spec.md](docs/spec/customer-spec.md).
+
+## Что почитать
+
+- [Карта сервисов маркетплейса](https://vikulin-va.ru/case/services-map/) — где здесь границы Customer.
+- [Keycloak](https://vikulin-va.ru/keycloak/) — выдача токенов и проверка подписи на стороне сервиса.
+- [Авторизация и доступ](https://vikulin-va.ru/auth-patterns/) — роли, ABAC, кто что может.
+- [Тестирование](https://vikulin-va.ru/testing/) — какие тесты имеют смысл на этом слое.

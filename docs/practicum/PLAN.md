@@ -79,7 +79,7 @@ Spring Data JPA в учебном каталоге, jOOQ во взрослых �
 
 ## Шаг 3. Команда, валидация и коды ошибок
 
-**Материал:** [/validation/where-to-validate/](https://vikulin-va.ru/validation/where-to-validate/) · [/error-handling/error-model/](https://vikulin-va.ru/error-handling/error-model/) · [/rest-api/java/errors/](https://vikulin-va.ru/rest-api/java/errors/)
+**Материал:** [/validation/where-to-validate/](https://vikulin-va.ru/validation/where-to-validate/) · [/error-handling/error-model/](https://vikulin-va.ru/error-handling/error-model/) · [/rest-api/java/errors/](https://vikulin-va.ru/rest-api/errors/)
 
 **Фазы:** 12 контракты · 6 принципы и паттерны
 
@@ -92,7 +92,7 @@ Spring Data JPA в учебном каталоге, jOOQ во взрослых �
 
 ## Шаг 4. Правило внутри модели
 
-**Материал:** [/domain-driven-design/01-what-is-ddd/](https://vikulin-va.ru/domain-driven-design/01-what-is-ddd/) · [/java/records-and-modern/](https://vikulin-va.ru/java/records-and-modern/)
+**Материал:** [/domain-driven-design/01-what-is-ddd/](https://vikulin-va.ru/ddd/01-what-is-ddd/) · [/java/records-and-modern/](https://vikulin-va.ru/java/records-and-modern/)
 
 **Фазы:** 24 DDD (начала) · 1 основы языка
 
@@ -156,7 +156,7 @@ Liquibase на пустой базе и сверяет её с сущность�
 
 ## Шаг 7. Тот же каталог, но по-взрослому
 
-**Материал:** [/use-case-pattern/](https://vikulin-va.ru/use-case-pattern/) · [/patterns/hexagonal/](https://vikulin-va.ru/patterns/hexagonal/) · [/case/catalog-service/](https://vikulin-va.ru/case/catalog-service/)
+**Материал:** [/use-case-pattern/](https://vikulin-va.ru/use-case-pattern/) · [/patterns/hexagonal/](https://vikulin-va.ru/hexagonal/) · [/case/catalog-service/](https://vikulin-va.ru/case/catalog-service/)
 
 **Фазы:** 29 UCP · 25 архитектурные паттерны · 26 методологии
 
@@ -169,7 +169,7 @@ Liquibase на пустой базе и сверяет её с сущность�
 
 ## Шаг 8. Заказ: синхронный резерв у соседа
 
-**Материал:** [/patterns/resilience/](https://vikulin-va.ru/patterns/resilience/) · [/microservices/](https://vikulin-va.ru/microservices/) · [/case/order-service/](https://vikulin-va.ru/case/order-service/)
+**Материал:** [/patterns/resilience/](https://vikulin-va.ru/patterns/resilience/) · [/microservices/](https://vikulin-va.ru/architecture-choice/monolith-vs-microservices/) · [/case/order-service/](https://vikulin-va.ru/case/order-service/)
 
 **Фазы:** 11 сеть · 15 микросервисы · 25 паттерны сервиса
 
@@ -182,7 +182,7 @@ Liquibase на пустой базе и сверяет её с сущность�
 
 ## Шаг 9. Идемпотентность
 
-**Материал:** [/patterns/idempotency/](https://vikulin-va.ru/patterns/idempotency/) · [/rest-api/](https://vikulin-va.ru/rest-api/)
+**Материал:** [/patterns/idempotency/](https://vikulin-va.ru/distributed-patterns-style-guide/idempotency/) · [/rest-api/](https://vikulin-va.ru/rest-api/)
 
 **Фазы:** 12 контракты · 5 многопоточность
 
@@ -194,7 +194,7 @@ Liquibase на пустой базе и сверяет её с сущность�
 
 ## Шаг 10. События, outbox и контракт
 
-**Материал:** [/kafka/](https://vikulin-va.ru/kafka/) · [/patterns/outbox/](https://vikulin-va.ru/patterns/outbox/) · [/api-styles/](https://vikulin-va.ru/api-styles/)
+**Материал:** [/kafka/](https://vikulin-va.ru/kafka/) · [/patterns/outbox/](https://vikulin-va.ru/distributed-patterns-style-guide/outbox-inbox/) · [/api-styles/](https://vikulin-va.ru/api-styles/)
 
 **Фазы:** 14 брокеры · 25 outbox · 10 MongoDB
 
@@ -211,7 +211,7 @@ AsyncAPI (`contracts/`) с генерацией DTO.
 
 ## Шаг 11. Сага и статусная модель заказа
 
-**Материал:** [/patterns/saga/](https://vikulin-va.ru/patterns/saga/) · [/state-machines/what-is-a-state-machine/](https://vikulin-va.ru/state-machines/what-is-a-state-machine/)
+**Материал:** [/patterns/saga/](https://vikulin-va.ru/distributed-patterns-style-guide/saga/) · [/state-machines/what-is-a-state-machine/](https://vikulin-va.ru/state-machines/what-is-a-state-machine/)
 
 **Фазы:** 14 · 15 · 23 системный дизайн · 25
 
@@ -225,7 +225,7 @@ AsyncAPI (`contracts/`) с генерацией DTO.
 
 ## Шаг 12. Токены, роли и файлы
 
-**Материал:** [/keycloak/](https://vikulin-va.ru/keycloak/) · [/spring/security/](https://vikulin-va.ru/spring/security/) · [/aws/object-storage/](https://vikulin-va.ru/aws/object-storage/)
+**Материал:** [/keycloak/](https://vikulin-va.ru/keycloak/) · [/spring/security/](https://vikulin-va.ru/spring/security/) · [/aws/object-storage/](https://vikulin-va.ru/object-storage/)
 
 **Фазы:** 13 безопасность · 10 хранилища (S3)
 
@@ -239,7 +239,7 @@ AsyncAPI (`contracts/`) с генерацией DTO.
 
 ## Шаг 13. API Gateway и BFF
 
-**Материал:** [/api-styles/](https://vikulin-va.ru/api-styles/) · [/microservices/](https://vikulin-va.ru/microservices/)
+**Материал:** [/api-styles/](https://vikulin-va.ru/api-styles/) · [/microservices/](https://vikulin-va.ru/architecture-choice/monolith-vs-microservices/)
 
 **Фазы:** 12 · 15 · 23 · 11
 
@@ -252,7 +252,7 @@ AsyncAPI (`contracts/`) с генерацией DTO.
 
 ## Шаг 14. Веб-клиент и продуктовые метрики
 
-**Материал:** [/frontend/](https://vikulin-va.ru/frontend/) · [/product/](https://vikulin-va.ru/product/) · [/testing/](https://vikulin-va.ru/testing/)
+**Материал:** [/frontend/](https://vikulin-va.ru/frontend/) · [/product/](https://vikulin-va.ru/product-engineer/) · [/testing/](https://vikulin-va.ru/testing/)
 
 **Фазы:** 28 продуктовое мышление · 20 качество
 
@@ -290,7 +290,7 @@ null-безопасность, data-классы, корутины вместо 
 
 ## Б2. Поиск по каталогу на естественном языке
 
-**Материал:** [/ai/](https://vikulin-va.ru/ai/) · **Фаза:** 22
+**Материал:** [/ai/](https://vikulin-va.ru/product-engineer/) · **Фаза:** 22
 
 Запрос «недорогая беспроводная мышь для работы» превращается в фильтры каталога:
 промпт, ограничение стоимости, кэш ответов, поведение при недоступном провайдере.

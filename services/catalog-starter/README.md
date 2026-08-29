@@ -70,3 +70,21 @@ public void reserve(int quantity) {
 
 Это первый шаг к тому, что дальше в программе называется доменной моделью: правило
 нельзя обойти, потому что менять остаток снаружи нечем.
+
+## Что почитать
+
+Сервис намеренно собран из того, что разобрано на сайте — каждая его часть
+объяснена отдельной статьёй:
+
+- [Spring Boot: автоконфигурация](https://vikulin-va.ru/spring/boot-auto-configuration/) — почему приложение поднимается без единого XML.
+- [Внедрение зависимостей](https://vikulin-va.ru/spring/di-and-lifecycle/) — как контроллер получает сервис, а сервис репозиторий.
+- [Spring Data JPA](https://vikulin-va.ru/spring/data-jpa/) — запрос из имени метода, проекции, N+1.
+- [@Transactional](https://vikulin-va.ru/spring/transactional/) — границы транзакции и типичные ловушки.
+- [Где валидировать](https://vikulin-va.ru/validation/where-to-validate/) и [модель ошибок](https://vikulin-va.ru/error-handling/error-model/) — почему 400 это не 409.
+- [Ошибки в REST](https://vikulin-va.ru/rest-api/errors/) — Problem Details и коды ответа.
+- [Что такое DDD](https://vikulin-va.ru/ddd/01-what-is-ddd/) — зачем правило живёт в сущности.
+- [Транзакции и блокировки](https://vikulin-va.ru/hibernate/transactions-and-locking/), [гонки](https://vikulin-va.ru/concurrency/race-conditions/) — почему сто покупателей продают больше, чем есть.
+- [Типы индексов](https://vikulin-va.ru/postgres/indexes-types/) и [кэширование](https://vikulin-va.ru/redis/caching-patterns/) — шестой шаг практикума целиком.
+
+Взрослая версия того же сервиса — `services/catalog`, разбор её устройства:
+[«Catalog Service изнутри»](https://vikulin-va.ru/case/catalog-service-walkthrough/).

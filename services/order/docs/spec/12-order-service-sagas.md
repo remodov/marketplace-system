@@ -118,4 +118,4 @@ sequenceDiagram
 
 - Outbox-relay — Debezium + Kafka Connect, либо своя `@Scheduled` job, читающая `outbox WHERE published_at IS NULL`.
 - Saga state — таблицы `refund_sagas`, без отдельного фреймворка (нет нужды в Camunda для этого объёма).
-- Idempotent consumer — `processed_events`. См. [распределённые паттерны](https://vikulin-va.ru/distributed-patterns/).
+- Idempotent consumer — `processed_events`. См. [распределённые паттерны](https://vikulin-va.ru/distributed-patterns-style-guide/).

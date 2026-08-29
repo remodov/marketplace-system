@@ -62,3 +62,12 @@ docker run --rm -v "$PWD/migrations:/liquibase/changelog" \
 ## Лицензия
 
 MIT — см. [LICENSE](LICENSE).
+
+## Что почитать
+
+- [Catalog Service в кейсе](https://vikulin-va.ru/case/catalog-service/) и [разбор по шагам](https://vikulin-va.ru/case/catalog-service-walkthrough/).
+- [Гексагональная архитектура](https://vikulin-va.ru/hexagonal/) — почему адаптеры отделены от ядра.
+- [jOOQ](https://vikulin-va.ru/jooq/) — генерация классов из живой схемы вместо ручных POJO.
+- [CQRS](https://vikulin-va.ru/cqrs/) — почему чтение и запись разъехались.
+- [Конечные автоматы](https://vikulin-va.ru/state-machines/) — статусы карточки как автомат.
+- Простая версия того же сервиса для первых шагов практикума — `../catalog-starter`.

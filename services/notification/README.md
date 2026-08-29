@@ -107,3 +107,10 @@ docker compose up -d postgres
 ## Лицензия
 
 MIT.
+
+## Что почитать
+
+- [Notification Service в кейсе](https://vikulin-va.ru/case/notification-service/) — зачем сервис существует и чего он не делает.
+- [Kafka](https://vikulin-va.ru/kafka/) — как приходят события заказа.
+- [Outbox и inbox](https://vikulin-va.ru/distributed-patterns-style-guide/outbox-inbox/), [идемпотентность](https://vikulin-va.ru/distributed-patterns-style-guide/idempotency/) — почему повторное событие не шлёт второе письмо.
+- [MongoDB](https://vikulin-va.ru/mongodb/) — журнал доставок и шаблоны.
