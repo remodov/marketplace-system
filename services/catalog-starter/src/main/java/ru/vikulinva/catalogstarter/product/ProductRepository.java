@@ -10,5 +10,7 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
 
     List<Product> findByTitleContainingIgnoreCase(String part);
 
-    List<Product> findByPriceLessThanEqualOrderByPriceAsc(BigDecimal maxPrice);
+    // TODO шаг 2: объявить метод поиска товаров не дороже указанной цены.
+    // Spring Data выводит запрос из имени метода — SQL писать не нужно.
+    // Порядок выдачи задаётся тем же именем.
 }

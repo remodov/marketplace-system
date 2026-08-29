@@ -23,10 +23,8 @@ public class ProductService {
             : repository.findByTitleContainingIgnoreCase(query.strip());
     }
 
-    @Transactional(readOnly = true)
-    public List<Product> cheaperThan(BigDecimal maxPrice) {
-        return repository.findByPriceLessThanEqualOrderByPriceAsc(maxPrice);
-    }
+    // TODO шаг 2: сценарий «товары не дороже указанной цены».
+    // Метод только для чтения — подумай, что это меняет в транзакции.
 
     @Transactional(readOnly = true)
     public Product byId(UUID id) {

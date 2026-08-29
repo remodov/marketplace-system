@@ -43,11 +43,12 @@ public class ProductController {
     public record ReserveRequest(@Positive int quantity) {
     }
 
+    // TODO шаг 2: добавить необязательный параметр maxPrice.
+    // Без него ручка отдаёт весь каталог, как сейчас; с ним — только те товары,
+    // что не дороже указанной цены.
     @GetMapping
-    public List<ProductView> search(@RequestParam(required = false) String query,
-                                    @RequestParam(required = false) BigDecimal maxPrice) {
-        List<Product> found = maxPrice == null ? service.search(query) : service.cheaperThan(maxPrice);
-        return found.stream().map(ProductView::of).toList();
+    public List<ProductView> search(@RequestParam(required = false) String query) {
+        return service.search(query).stream().map(ProductView::of).toList();
     }
 
     @GetMapping("/{id}")
