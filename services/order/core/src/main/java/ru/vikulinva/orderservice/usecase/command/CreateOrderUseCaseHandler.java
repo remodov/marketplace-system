@@ -71,13 +71,10 @@ public class CreateOrderUseCaseHandler implements UseCaseHandler<CreateOrderUseC
         // BR-014 — заранее, чтобы не дёргать Catalog зря.
         ensureSingleSeller(useCase.items());
 
-        // BR-010 — идемпотентность: если ключ виден и хеш совпадает, отдаём прежний заказ.
-        var existingOrderId = idempotencyKeyRepository.find(useCase.idempotencyKey(), useCase.requestHash());
-        if (existingOrderId.isPresent()) {
-            return orderRepository.findById(existingOrderId.get())
-                .orElseThrow(() -> new IllegalStateException(
-                    "Idempotency key points to non-existent order " + existingOrderId.get()));
-        }
+        // TODO шаг 9 (BR-010): повтор с тем же ключом не должен создавать второй заказ.
+        // Порт idempotencyKeyRepository уже описывает, что нужно: найти по ключу и хешу,
+        // а после успешного создания — сохранить. Обрати внимание на исключение,
+        // которое порт обещает бросить при том же ключе с другим телом.
 
         // Запрос цен у Catalog.
         Map<ProductId, Money> prices = resolvePrices(useCase.items());
@@ -97,7 +94,7 @@ public class CreateOrderUseCaseHandler implements UseCaseHandler<CreateOrderUseC
         );
 
         orderRepository.save(order);
-        idempotencyKeyRepository.save(useCase.idempotencyKey(), useCase.requestHash(), orderId, now);
+        // TODO шаг 9: сохранить ключ рядом с заказом — в той же транзакции.
         return order;
     }
 

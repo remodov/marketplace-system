@@ -29,26 +29,14 @@ public class JooqIdempotencyKeyRepository implements IdempotencyKeyRepository {
 
     @Override
     public Optional<OrderId> find(String idempotencyKey, String requestHash) {
-        IdempotencyKeysPojo row = dsl.selectFrom(IDEMPOTENCY_KEYS)
-            .where(IDEMPOTENCY_KEYS.IDEMPOTENCY_KEY.eq(idempotencyKey))
-            .fetchOneInto(IdempotencyKeysPojo.class);
-        if (row == null) {
-            return Optional.empty();
-        }
-        if (!row.getRequestHash().equals(requestHash)) {
-            // BR-010: тот же ключ для другого тела запроса — конфликт.
-            throw new IdempotencyKeyConflictException(idempotencyKey);
-        }
-        return Optional.of(OrderId.of(row.getOrderId()));
+        // TODO шаг 9: найти запись по ключу. Три исхода, а не два:
+        // ключа нет; ключ есть и тело то же; ключ есть, а тело другое.
+        return Optional.empty();
     }
 
     @Override
     public void save(String idempotencyKey, String requestHash, OrderId orderId, Instant createdAt) {
-        dsl.insertInto(IDEMPOTENCY_KEYS)
-            .set(IDEMPOTENCY_KEYS.IDEMPOTENCY_KEY, idempotencyKey)
-            .set(IDEMPOTENCY_KEYS.REQUEST_HASH, requestHash)
-            .set(IDEMPOTENCY_KEYS.ORDER_ID, orderId.value())
-            .set(IDEMPOTENCY_KEYS.CREATED_AT, createdAt.atOffset(ZoneOffset.UTC))
-            .execute();
+        // TODO шаг 9: сохранить ключ, хеш тела и идентификатор заказа.
+        // Таблица idempotency_keys уже есть в миграциях.
     }
 }
