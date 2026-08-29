@@ -1,7 +1,5 @@
 package ru.vikulinva.catalogstarter.product;
 
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,6 +10,7 @@ import java.util.UUID;
 @Service
 public class ProductService {
 
+    // TODO шаг 6: имя кэша и сброс при каждом изменении товара.
     static final String CARDS = "product-cards";
 
     private final ProductRepository repository;
@@ -32,7 +31,7 @@ public class ProductService {
         return repository.findByPriceLessThanEqualOrderByPriceAsc(maxPrice);
     }
 
-    @Cacheable(CARDS)
+    // TODO шаг 6: карточка товара — самый частый запрос каталога, её и кэшируем.
     @Transactional(readOnly = true)
     public ProductCard card(UUID id) {
         return ProductCard.of(byId(id));
@@ -48,7 +47,6 @@ public class ProductService {
         return repository.save(new Product(UUID.randomUUID(), title, price, stock));
     }
 
-    @CacheEvict(cacheNames = CARDS, key = "#id")
     @Transactional
     public Product changePrice(UUID id, BigDecimal newPrice) {
         Product product = byId(id);
@@ -56,7 +54,6 @@ public class ProductService {
         return product;
     }
 
-    @CacheEvict(cacheNames = CARDS, key = "#id")
     @Transactional
     public Product applyDiscount(UUID id, int percent) {
         Product product = byId(id);
@@ -64,7 +61,6 @@ public class ProductService {
         return product;
     }
 
-    @CacheEvict(cacheNames = CARDS, key = "#id")
     @Transactional
     public Product changeStock(UUID id, int delta) {
         Product product = byId(id);
@@ -72,7 +68,6 @@ public class ProductService {
         return product;
     }
 
-    @CacheEvict(cacheNames = CARDS, key = "#id")
     @Transactional
     public Product reserve(UUID id, int quantity) {
         Product product = repository.findForUpdate(id).orElseThrow(() -> new ProductNotFoundException(id));

@@ -2,9 +2,8 @@ package ru.vikulinva.catalogstarter;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cache.annotation.EnableCaching;
 
-@EnableCaching
+// TODO шаг 6: без включённого кэширования аннотации на сервисе ничего не делают.
 @SpringBootApplication
 public class CatalogStarterApplication {
 

@@ -14,11 +14,5 @@ spring:
     open-in-view: false
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
-  cache:
-    type: redis
-    redis:
-      time-to-live: 10m
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
+  # TODO шаг 6: кэш на Redis. Хост и порт — из стенда infra/compose.yaml,
+  # время жизни записи выбираешь сам и объясняешь, почему столько.

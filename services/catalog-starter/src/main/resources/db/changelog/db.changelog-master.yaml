@@ -26,12 +26,7 @@ databaseChangeLog:
             columns:
               - column: { name: reserved, type: int, defaultValueNumeric: 0, constraints: { nullable: false } }
 
-  - changeSet:
-      id: 003-products-title-trigram
-      author: practicum
-      dbms: postgresql
-      changes:
-        - sql:
-            sql: CREATE EXTENSION IF NOT EXISTS pg_trgm
-        - sql:
-            sql: CREATE INDEX idx_products_title_trgm ON products USING gin (title gin_trgm_ops)
+# TODO шаг 6: changeSet 003 — индекс под поиск по части названия.
+# Обычный btree тут бесполезен: он ищет по началу строки. Нужен gin с pg_trgm,
+# а расширение сначала надо создать. На H2 такой changeSet не должен выполняться —
+# у changeSet есть атрибут для этого.
