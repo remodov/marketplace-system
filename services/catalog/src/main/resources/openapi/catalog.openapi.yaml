@@ -128,36 +128,9 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
         '500': { $ref: '#/components/responses/InternalServerError' }
 
-  /api/v1/products/{productId}/price:
-    parameters:
-      - $ref: '#/components/parameters/ProductId'
-    patch:
-      tags: [Products]
-      operationId: changeProductPrice
-      summary: Изменить цену продукта
-      description: |
-        Меняет цену карточки. BR-P01 (price > 0).
-        ABAC: только владелец (BR-P04); чужой → 404 `OWN_PRODUCT_REQUIRED`.
-      security:
-        - bearerAuth: [seller]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ChangePriceRequest'
-      responses:
-        '200':
-          description: Price changed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProductDto'
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
-        '500': { $ref: '#/components/responses/InternalServerError' }
+  # TODO шаг 7: PATCH /api/v1/products/{productId}/price.
+  # Контракт пишется первым: из него генерируются DTO и интерфейс ProductsApi,
+  # который реализует контроллер. Посмотри, как описаны publish и hide выше.
 
   /api/v1/products/my:
     get:
@@ -253,16 +226,7 @@ components:
           enum: [RUB]
           example: RUB
 
-    ChangePriceRequest:
-      type: object
-      required: [price]
-      properties:
-        price:
-          type: number
-          format: decimal
-          minimum: 0
-          exclusiveMinimum: true
-          example: 79990.00
+    # TODO шаг 7: схема тела запроса на смену цены.
 
     ProductDto:
       type: object

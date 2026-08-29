@@ -16,7 +16,8 @@ public interface ProductRepository {
 
     void updateStatus(UUID id, Product.Status newStatus, OffsetDateTime updatedAt);
 
-    void updatePrice(UUID id, BigDecimal newPrice, OffsetDateTime updatedAt);
+    // TODO шаг 7: метод порта под смену цены. Порт описывает, что нужно use case'у,
+    // а не что умеет база — отсюда и сигнатура.
 
     PageView<Product> findBySeller(
         UUID sellerId,

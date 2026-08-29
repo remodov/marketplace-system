@@ -10,13 +10,11 @@ import ru.remodov.catalog.api.AuthenticatedSeller;
 import ru.remodov.catalog.domain.ProductId;
 import ru.remodov.catalog.domain.ProductSortField;
 import ru.remodov.catalog.generated.api.ProductsApi;
-import ru.remodov.catalog.generated.api.model.ChangePriceRequest;
 import ru.remodov.catalog.generated.api.model.CreateProductRequest;
 import ru.remodov.catalog.generated.api.model.ProductDto;
 import ru.remodov.catalog.generated.api.model.ProductPageDto;
 import ru.remodov.catalog.generated.api.model.ProductStatus;
 import ru.remodov.catalog.mapper.ProductJsonBeanMapper;
-import ru.remodov.catalog.usecase.product.ChangeProductPriceUseCase;
 import ru.remodov.catalog.usecase.product.CreateProductUseCase;
 import ru.remodov.catalog.usecase.product.GetProductQuery;
 import ru.remodov.catalog.usecase.product.HideProductUseCase;
@@ -69,15 +67,9 @@ public class ProductController implements ProductsApi {
         );
     }
 
-    @Override
-    @PreAuthorize("hasRole('seller') or hasRole('admin')")
-    public ResponseEntity<ProductDto> changeProductPrice(UUID productId, ChangePriceRequest req) {
-        var sellerId = authenticatedSeller.currentSellerId();
-        boolean isAdmin = authenticatedSeller.isAdmin();
-        return ResponseEntity.ok(dispatcher.dispatch(
-            new ChangeProductPriceUseCase(ProductId.of(productId), sellerId, isAdmin, req.getPrice())
-        ));
-    }
+    // TODO шаг 7: реализовать changeProductPrice из сгенерированного ProductsApi.
+    // Контроллер только собирает use case из запроса и отдаёт результат диспетчеру —
+    // ни одного правила здесь быть не должно.
 
     @Override
     @PreAuthorize("hasRole('seller') or hasRole('admin')")

@@ -48,14 +48,7 @@ public class JooqProductRepository implements ProductRepository {
             .execute();
     }
 
-    @Override
-    public void updatePrice(UUID id, BigDecimal newPrice, OffsetDateTime updatedAt) {
-        dsl.update(PRODUCTS)
-            .set(PRODUCTS.PRICE, newPrice)
-            .set(PRODUCTS.UPDATED_AT, updatedAt)
-            .where(PRODUCTS.ID.eq(id))
-            .execute();
-    }
+    // TODO шаг 7: реализация метода порта на jOOQ.
 
     @Override
     public PageView<Product> findBySeller(
