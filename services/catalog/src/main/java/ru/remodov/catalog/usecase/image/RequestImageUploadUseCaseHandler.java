@@ -24,12 +24,11 @@ public class RequestImageUploadUseCaseHandler
     @Override
     @Transactional(readOnly = true)
     public ProductImageService.PresignedUpload handle(RequestImageUploadUseCase uc) {
+        // TODO шаг 12: ссылку на загрузку получает только владелец товара.
+        // Карточку смотреть может кто угодно, а грузить в неё файлы — нет.
+        // Чужой товар для не-владельца должен выглядеть как несуществующий.
         Product product = repo.findById(uc.productId().value(), ProductRepository.SelectMode.NO_LOCK)
             .orElseThrow(() -> new ProductNotFoundException(uc.productId().value()));
-
-        if (!uc.isAdmin() && !product.sellerId().equals(uc.requesterSellerId().value())) {
-            throw new OwnProductRequiredException(uc.productId().value());
-        }
 
         return images.presignUpload(product.id(), uc.contentType());
     }

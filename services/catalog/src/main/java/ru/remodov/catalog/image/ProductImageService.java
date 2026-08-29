@@ -29,18 +29,10 @@ public class ProductImageService {
     }
 
     public PresignedUpload presignUpload(UUID productId, String contentType) {
-        String key = "products/" + productId + "/" + UUID.randomUUID();
-        PutObjectRequest put = PutObjectRequest.builder()
-            .bucket(properties.bucket())
-            .key(key)
-            .contentType(contentType)
-            .build();
-        var presigned = presigner.presignPutObject(PutObjectPresignRequest.builder()
-            .signatureDuration(Duration.ofMinutes(properties.uploadTtlMinutes()))
-            .putObjectRequest(put)
-            .build());
-        return new PresignedUpload(key, presigned.url().toString(),
-            presigned.expiration().toString());
+        // TODO шаг 12: подписанная ссылка на загрузку.
+        // Ключ объекта должен говорить, чей это файл; срок жизни ссылки — из настроек.
+        // Presigner уже настроен на хранилище стенда, ходить в сеть для подписи не нужно.
+        throw new UnsupportedOperationException("Шаг 12: ссылка на загрузку не реализована");
     }
 
     public String presignDownload(String key) {
