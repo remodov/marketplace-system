@@ -18,11 +18,13 @@
 |---|---|---|---|
 | `services/catalog` | карточки, остатки, поиск, модерация | не считает деньги | [Catalog Service](https://vikulin-va.ru/case/catalog-service/) |
 | `services/order` | корзина, заказ, резерв, статусы | не пишет в каталог | [Order Service](https://vikulin-va.ru/case/order-service/) |
-| `services/payment` | платежи, эскроу, выплаты | не знает про заказы | [Карта сервисов](https://vikulin-va.ru/case/services-map/) |
+| `services/payment` | платежи, возвраты, автомат статусов (голый JDBC) | не знает про заказы | [Сага](https://vikulin-va.ru/distributed-patterns-style-guide/saga/) |
 | `services/notification` | email, sms, push по команде | ничего не решает само | [Notification Service](https://vikulin-va.ru/case/notification-service/) |
 | `services/customer` | identity, профили, авторизация | не хранит товары | [Keycloak и токены](https://vikulin-va.ru/keycloak/) |
 | `services/backoffice` | модерация, споры, аудит | не правит чужие данные напрямую | [Карта сервисов](https://vikulin-va.ru/case/services-map/) |
 | `services/catalog-starter` | тот же каталог, но написанный просто | не прячет ничего за абстракциями | [Разбор каталога по шагам](https://vikulin-va.ru/case/catalog-service-walkthrough/) |
+| `services/bff` | сборка экрана и лимит частоты на границе | не содержит бизнес-правил | [Стили API](https://vikulin-va.ru/api-styles/) |
+| `web` | витрина, корзина, оформление и воронка | не ходит в сервисы напрямую | [Frontend](https://vikulin-va.ru/frontend/) |
 
 Границы взяты из кейса и держатся намеренно: ограничение «что сервис **не** делает»
 здесь важнее списка его функций. Почему границы проведены именно так — в разборе
@@ -91,10 +93,21 @@ Kafka, Redis, MongoDB, Elasticsearch, MinIO и Keycloak. Что это за ин
 | 4 | правило внутри модели | `step-04-domain-rules` | [Что такое DDD](https://vikulin-va.ru/ddd/01-what-is-ddd/) · [Современная Java](https://vikulin-va.ru/java/records-and-modern/) |
 | 5 | резерв, миграция, сто покупателей разом | `step-05-stock-and-locking` | [PostgreSQL](https://vikulin-va.ru/postgres/) · [Транзакции и блокировки](https://vikulin-va.ru/hibernate/transactions-and-locking/) · [Гонки](https://vikulin-va.ru/concurrency/race-conditions/) |
 | 6 | поиск: индекс и кэш | `step-06-search-and-cache` | [Типы индексов](https://vikulin-va.ru/postgres/indexes-types/) · [Кэширование](https://vikulin-va.ru/redis/caching-patterns/) |
-| 7 | тот же каталог, но по-взрослому: UseCase, Handler, порт | `step-07-usecase-and-handler` | [Use Case Pattern](https://vikulin-va.ru/use-case-pattern/) · [Гексагональная архитектура](https://vikulin-va.ru/hexagonal/) · [Catalog Service](https://vikulin-va.ru/case/catalog-service/) |
-| 8–15 | заказ, события, сага, поиск, наблюдаемость | в работе | [План практикума](docs/practicum/PLAN.md) |
+| 7 | тот же каталог, но по-взрослому: UseCase, Handler, порт | `step-07-usecase-and-handler` | [Use Case Pattern](https://vikulin-va.ru/use-case-pattern/) · [Гексагональная архитектура](https://vikulin-va.ru/hexagonal/) |
+| 8 | сосед отвечает медленно, срывается и лежит | `step-08-resilience` | [Устойчивость](https://vikulin-va.ru/patterns/resilience/) · [Order Service](https://vikulin-va.ru/case/order-service/) |
+| 9 | идемпотентность: один запрос — один заказ | `step-09-idempotency` | [Идемпотентность](https://vikulin-va.ru/distributed-patterns-style-guide/idempotency/) |
+| 10 | событие через outbox и внешний контракт | `step-10-events-and-contract` | [Kafka](https://vikulin-va.ru/kafka/) · [Outbox и inbox](https://vikulin-va.ru/distributed-patterns-style-guide/outbox-inbox/) |
+| 11 | сага и автомат статусов платежа | `step-11-saga-and-state-machine` | [Сага](https://vikulin-va.ru/distributed-patterns-style-guide/saga/) · [Автоматы](https://vikulin-va.ru/state-machines/what-is-a-state-machine/) |
+| 12 | токены, роли и файлы мимо сервиса | `step-12-tokens-and-files` | [Keycloak](https://vikulin-va.ru/keycloak/) · [Объектные хранилища](https://vikulin-va.ru/object-storage/) |
+| 13 | граница системы: экран и лимит частоты | `step-13-gateway-and-bff` | [Стили API](https://vikulin-va.ru/api-styles/) · [Redis](https://vikulin-va.ru/redis/) |
+| 14 | веб-клиент и воронка покупки | `step-14-web-and-funnel` | [Frontend](https://vikulin-va.ru/frontend/) · [Продукт-инженер](https://vikulin-va.ru/product-engineer/) |
+| 15 | образ, манифесты, пайплайн, наблюдаемость | `step-15-delivery-and-observability` | [Docker](https://vikulin-va.ru/docker/) · [Kubernetes](https://vikulin-va.ru/kubernetes/) · [Наблюдаемость](https://vikulin-va.ru/observability/) |
+| Б1 | Notification на Kotlin | `side-b1-kotlin-notification` | [Kotlin](https://vikulin-va.ru/kotlin/) |
+| Б2 | поиск по каталогу на естественном языке | `side-b2-llm-search` | [Продукт-инженер](https://vikulin-va.ru/product-engineer/) |
 
-Шаги 1–6 идут по `services/catalog-starter`, дальше — по настоящим сервисам.
+Шаги 1–6 идут по `services/catalog-starter`, дальше — по настоящим сервисам:
+каталог, заказ, платежи, BFF, веб-клиент и выкат. Все шаги готовы; чем
+проверяется каждый — написано в его `TASK.md`.
 
 ## Что почитать рядом
 

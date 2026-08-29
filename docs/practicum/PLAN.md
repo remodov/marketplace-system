@@ -149,12 +149,29 @@ Liquibase на пустой базе и сверяет её с сущность�
 | 5 | `step-05-stock-and-locking` | `step-05-stock-and-locking-solution` | 4 из 29 |
 | 6 | `step-06-search-and-cache` | `step-06-search-and-cache-solution` | 1 из 32 |
 | 7 | `step-07-usecase-and-handler` | `step-07-usecase-and-handler-solution` | 6 из 40 |
+| 8 | `step-08-resilience` | `step-08-resilience-solution` | 3 из 73 |
+| 9 | `step-09-idempotency` | `step-09-idempotency-solution` | 4 из 76 |
+| 10 | `step-10-events-and-contract` | `step-10-events-and-contract-solution` | 16 из 79 |
+| 11 | `step-11-saga-and-state-machine` | `step-11-saga-and-state-machine-solution` | 4 из 11 |
+| 12 | `step-12-tokens-and-files` | `step-12-tokens-and-files-solution` | 2 из 44 |
+| 13 | `step-13-gateway-and-bff` | `step-13-gateway-and-bff-solution` | 3 из 4 |
+| 14 | `step-14-web-and-funnel` | `step-14-web-and-funnel-solution` | 3 из 7 |
+| 15 | `step-15-delivery-and-observability` | `step-15-delivery-and-observability-solution` | 3 из 35 + 8 замечаний скрипта |
+| Б1 | `side-b1-kotlin-notification` | `side-b1-kotlin-notification-solution` | 4 из 23 |
+| Б2 | `side-b2-llm-search` | `side-b2-llm-search-solution` | 2 из 39 |
 
 Шаг 1 ветки не требует: там запускают готовый сервис и разбирают, из чего он
 состоит. `main` — накопленный эталон: там лежит всё, что сделано к текущему шагу.
 
-Шаги 1–6 идут на H2 и Docker не требуют. С седьмого нужен стенд: взрослые сервисы
-ходят в настоящую PostgreSQL, а классы jOOQ генерируются из накатанной схемы.
+Шаги 1–6, 11, 13, 14 и оба боковых идут без взрослой инфраструктуры: H2, кэш в
+памяти, заглушки вместо соседей. Шагам 7–10 и 12 нужен стенд — взрослые сервисы
+ходят в настоящую PostgreSQL, а классы jOOQ генерируются из накатанной схемы;
+шагу 13 нужен Redis.
+
+Чем проверяется шаг, написано в его `TASK.md`. Из корня репозитория работает
+адресация по имени сервиса: `./gradlew :catalog-starter:test`, `:order:test`,
+`:payment:test`, `:bff:test`, `:notification:test`. Клиент — `npm test --prefix web`,
+выкат — `python3 tools/check-deploy.py`.
 
 # Часть вторая: взрослая система
 
