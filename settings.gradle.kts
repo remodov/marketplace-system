@@ -3,6 +3,7 @@
 // в жизни, где он живёт своим репозиторием.
 rootProject.name = "marketplace-system"
 
+includeBuild("services/catalog-starter")
 includeBuild("services/catalog")
 includeBuild("services/order")
 includeBuild("services/customer")

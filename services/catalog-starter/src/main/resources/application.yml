@@ -1,0 +1,16 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: catalog-starter
+  datasource:
+    url: jdbc:postgresql://localhost:5438/catalog
+    username: catalog
+    password: catalog
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml

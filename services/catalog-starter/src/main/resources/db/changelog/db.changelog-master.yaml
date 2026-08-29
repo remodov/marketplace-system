@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-products
+      author: practicum
+      changes:
+        - createTable:
+            tableName: products
+            columns:
+              - column: { name: id, type: uuid, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: title, type: varchar(255), constraints: { nullable: false } }
+              - column: { name: price, type: numeric(12,2), constraints: { nullable: false } }
+              - column: { name: stock, type: int, constraints: { nullable: false } }
+              - column: { name: version, type: bigint, defaultValueNumeric: 0, constraints: { nullable: false } }
+        - createIndex:
+            tableName: products
+            indexName: idx_products_title
+            columns:
+              - column: { name: title }
