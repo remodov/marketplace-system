@@ -15,15 +15,12 @@ class TemplateRenderer {
 
     data class Rendered(val subject: String, val body: String)
 
-    fun render(template: TemplatesPojo, variables: Map<String, String>): Rendered = Rendered(
-        subject = template.subject.substitute(variables),
-        body = template.body.substitute(variables),
-    )
-
-    private fun String?.substitute(variables: Map<String, String>): String =
-        this?.let { text ->
-            PLACEHOLDER.replace(text) { match -> variables[match.groupValues[1]] ?: "" }
-        } ?: ""
+    // TODO Б1: перенести подстановку на Kotlin.
+    // Java-версия лежала рядом и делала это циклом по Matcher; здесь короче:
+    // Regex.replace принимает лямбду, а отсутствующее значение закрывается
+    // элвис-оператором. Пустые поля шаблона — обычный случай, не ошибка.
+    fun render(template: TemplatesPojo, variables: Map<String, String>): Rendered =
+        Rendered(subject = "", body = "")""
 
     private companion object {
         val PLACEHOLDER = Regex("""\$\{([a-zA-Z0-9_]+)}""")
