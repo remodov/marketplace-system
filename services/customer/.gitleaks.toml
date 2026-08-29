@@ -1,0 +1,12 @@
+title = "customer gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Generated and build outputs"
+paths = [
+  '''build/''',
+  '''.gradle/''',
+  '''.idea/''',
+]

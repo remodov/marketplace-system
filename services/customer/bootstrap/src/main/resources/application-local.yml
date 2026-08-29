@@ -1,0 +1,24 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5434/customer
+    username: customer
+    password: customer
+  kafka:
+    listener:
+      auto-startup: false
+
+customer:
+  outbox:
+    enabled: false
+  liquibase:
+    contexts: production,local
+
+logging:
+  level:
+    root: INFO
+    ru.vikulinva.customer: DEBUG
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0

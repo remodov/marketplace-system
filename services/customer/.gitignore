@@ -1,0 +1,10 @@
+# BEGIN ucp-skills (managed by claude-code-java/install.sh)
+# Папки .claude/docs/, .claude/agents/, .claude/hooks/ принадлежат install.sh
+# целиком — свои файлы туда не клади (.claude/skills/ остаётся открытым для
+# custom-скиллов; .claude/settings.json пользовательский, install.sh только
+# управляет в нём блоком hooks через идемпотентный python-мерж).
+.claude/skills/ucp-*
+.claude/docs/
+.claude/agents/
+.claude/hooks/
+# END ucp-skills

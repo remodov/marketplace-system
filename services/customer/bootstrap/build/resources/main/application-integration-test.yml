@@ -1,0 +1,19 @@
+spring:
+  kafka:
+    listener:
+      auto-startup: false
+
+customer:
+  outbox:
+    enabled: false
+  liquibase:
+    contexts: production,test
+  task:
+    scheduling:
+      pool:
+        size: 0
+
+management:
+  tracing:
+    sampling:
+      probability: 0.0

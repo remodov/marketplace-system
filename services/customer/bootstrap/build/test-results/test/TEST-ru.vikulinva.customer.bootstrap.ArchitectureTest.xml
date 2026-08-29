@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="ru.vikulinva.customer.bootstrap.ArchitectureTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-05-23T11:40:02.614Z" hostname="MacBook-Pro-vva.local" time="1.185">
+  <properties/>
+  <testcase name="core_must_not_depend_on_spring_web" classname="ru.vikulinva.customer.bootstrap.ArchitectureTest" time="1.18"/>
+  <testcase name="core_must_not_depend_on_jooq" classname="ru.vikulinva.customer.bootstrap.ArchitectureTest" time="0.001"/>
+  <testcase name="core_must_not_depend_on_jackson" classname="ru.vikulinva.customer.bootstrap.ArchitectureTest" time="0.0"/>
+  <testcase name="core_must_not_depend_on_persistence" classname="ru.vikulinva.customer.bootstrap.ArchitectureTest" time="0.002"/>
+  <testcase name="in_adapter_must_not_depend_on_out_adapter" classname="ru.vikulinva.customer.bootstrap.ArchitectureTest" time="0.002"/>
+  <system-out><![CDATA[2026-05-23T14:40:02.619+03:00  INFO 30230 --- [customer] [    Test worker] [                                                 ] com.tngtech.archunit.core.PluginLoader   : Detected Java version 21.0.11
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

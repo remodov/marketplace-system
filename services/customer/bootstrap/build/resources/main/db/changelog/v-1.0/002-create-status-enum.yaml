@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-create-customer-status-enum
+      author: ucp-bootstrap-design
+      context: production
+      comment: PG ENUM-тип для статуса Customer — позволяет jOOQ codegen построить Java-enum без forcedType
+      changes:
+        - sql:
+            sql: |
+              CREATE TYPE customer_status AS ENUM (
+                'PENDING_VERIFICATION',
+                'ACTIVE'
+              )
+            rollback: DROP TYPE IF EXISTS customer_status

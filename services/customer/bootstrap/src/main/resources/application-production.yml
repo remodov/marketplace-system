@@ -1,0 +1,9 @@
+spring:
+  config:
+    activate:
+      on-profile: production
+
+management:
+  tracing:
+    sampling:
+      probability: 0.1
