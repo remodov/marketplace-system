@@ -16,11 +16,9 @@ export default function Shop({ funnel, newKey = () => crypto.randomUUID() }: Pro
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    // TODO шаг 14: показ карточек — первый шаг воронки.
     loadCatalog()
-      .then(list => {
-        setProducts(list)
-        list.forEach(p => funnel.track('product_viewed', { productId: p.id }))
-      })
+      .then(list => setProducts(list))
       .catch(e => setError(String(e)))
   }, [funnel])
 
@@ -31,11 +29,11 @@ export default function Shop({ funnel, newKey = () => crypto.randomUUID() }: Pro
         ? prev.map(l => (l.product.id === product.id ? { ...l, quantity: l.quantity + 1 } : l))
         : [...prev, { product, quantity: 1 }]
     })
-    funnel.track('added_to_cart', { productId: product.id })
+    // TODO шаг 14: положили в корзину — второй шаг воронки.
   }, [funnel])
 
   const checkout = useCallback(async () => {
-    funnel.track('checkout_started')
+    // TODO шаг 14: начали оформление — третий шаг воронки.
     try {
       const created = await createOrder(
         cart.map(l => ({ productId: l.product.id, quantity: l.quantity })),
@@ -43,9 +41,9 @@ export default function Shop({ funnel, newKey = () => crypto.randomUUID() }: Pro
       )
       const orderScreen = await loadOrderScreen(created.id)
       setScreen(orderScreen)
-      if (orderScreen.paymentStatus === 'CAPTURED') {
-        funnel.track('order_paid', { orderId: created.id })
-      }
+      // TODO шаг 14: оплата прошла — последний шаг воронки.
+      // Считать его надо по реальному статусу платежа, а не по факту нажатия
+      // кнопки: нажали — не значит заплатили.
     } catch (e) {
       setError(String(e))
     }

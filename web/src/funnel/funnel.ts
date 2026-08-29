@@ -39,15 +39,7 @@ export class Funnel {
 
 /** Сколько людей дошло до каждого шага и какая доля от предыдущего. */
 export function conversion(events: FunnelEvent[]): { step: FunnelStep; count: number; ofPrevious: number }[] {
-  return FUNNEL_ORDER.map((step, index) => {
-    const count = events.filter(e => e.step === step).length
-    const previous = index === 0
-      ? count
-      : events.filter(e => e.step === FUNNEL_ORDER[index - 1]).length
-    return {
-      step,
-      count,
-      ofPrevious: previous === 0 ? 0 : Math.round((count / previous) * 100),
-    }
-  })
+  // TODO шаг 14: посчитать воронку — сколько дошло до каждого шага и какая это
+  // доля от предыдущего. Осторожно с шагом, до которого не дошёл никто.
+  return []
 }
