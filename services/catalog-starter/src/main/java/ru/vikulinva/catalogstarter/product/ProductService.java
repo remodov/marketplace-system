@@ -61,7 +61,7 @@ public class ProductService {
 
     @Transactional
     public Product reserve(UUID id, int quantity) {
-        Product product = byId(id);
+        Product product = repository.findForUpdate(id).orElseThrow(() -> new ProductNotFoundException(id));
         product.reserve(quantity);
         return product;
     }

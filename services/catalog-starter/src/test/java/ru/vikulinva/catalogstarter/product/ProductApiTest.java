@@ -57,14 +57,16 @@ class ProductApiTest {
     }
 
     @Test
-    void reserveDecreasesStock() throws Exception {
+    void reserveHoldsStockInsteadOfWritingItOff() throws Exception {
         Product product = service.create("USB-хаб", new BigDecimal("890.00"), 5);
         String body = json.writeValueAsString(new ProductController.ReserveRequest(2));
 
         mvc.perform(post("/products/{id}/reserve", product.getId())
                 .contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.stock", is(3)));
+            .andExpect(jsonPath("$.stock", is(5)))
+            .andExpect(jsonPath("$.reserved", is(2)))
+            .andExpect(jsonPath("$.available", is(3)));
     }
 
     @Test

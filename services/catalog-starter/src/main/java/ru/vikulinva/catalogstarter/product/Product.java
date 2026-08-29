@@ -28,6 +28,9 @@ public class Product {
     @Column(nullable = false)
     private int stock;
 
+    @Column(nullable = false)
+    private int reserved;
+
     @Version
     private long version;
 
@@ -57,6 +60,14 @@ public class Product {
         return stock;
     }
 
+    public int getReserved() {
+        return reserved;
+    }
+
+    public int available() {
+        return stock - reserved;
+    }
+
     public void changePrice(BigDecimal newPrice) {
         if (newPrice == null || newPrice.signum() <= 0) {
             throw new IllegalArgumentException("Цена должна быть больше нуля");
@@ -77,8 +88,8 @@ public class Product {
         if (delta == 0) {
             throw new IllegalArgumentException("Изменение остатка не может быть нулевым");
         }
-        if (stock + delta < 0) {
-            throw new OutOfStockException(id, -delta, stock);
+        if (stock + delta < reserved) {
+            throw new OutOfStockException(id, -delta, stock - reserved);
         }
         stock += delta;
     }
@@ -87,9 +98,9 @@ public class Product {
         if (quantity <= 0) {
             throw new IllegalArgumentException("Количество должно быть больше нуля");
         }
-        if (quantity > stock) {
-            throw new OutOfStockException(id, quantity, stock);
+        if (quantity > available()) {
+            throw new OutOfStockException(id, quantity, available());
         }
-        stock -= quantity;
+        reserved += quantity;
     }
 }

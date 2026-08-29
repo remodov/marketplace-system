@@ -1,5 +1,6 @@
 package ru.vikulinva.catalogstarter.product;
 
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.validation.FieldError;
@@ -21,6 +22,12 @@ public class ProductExceptionHandler {
     @ExceptionHandler(OutOfStockException.class)
     public ProblemDetail outOfStock(OutOfStockException e) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
+    }
+
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ProblemDetail concurrentChange(OptimisticLockingFailureException e) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,
+            "Товар изменили параллельно, повторите запрос");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

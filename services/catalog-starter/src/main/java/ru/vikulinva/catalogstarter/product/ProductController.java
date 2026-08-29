@@ -30,10 +30,11 @@ public class ProductController {
         this.service = service;
     }
 
-    public record ProductView(UUID id, String title, BigDecimal price, int stock) {
+    public record ProductView(UUID id, String title, BigDecimal price, int stock, int reserved, int available) {
 
         static ProductView of(Product product) {
-            return new ProductView(product.getId(), product.getTitle(), product.getPrice(), product.getStock());
+            return new ProductView(product.getId(), product.getTitle(), product.getPrice(),
+                product.getStock(), product.getReserved(), product.available());
         }
     }
 
