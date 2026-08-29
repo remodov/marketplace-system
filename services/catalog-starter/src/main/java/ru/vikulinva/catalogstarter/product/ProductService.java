@@ -24,6 +24,11 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
+    public List<Product> cheaperThan(BigDecimal maxPrice) {
+        return repository.findByPriceLessThanEqualOrderByPriceAsc(maxPrice);
+    }
+
+    @Transactional(readOnly = true)
     public Product byId(UUID id) {
         return repository.findById(id).orElseThrow(() -> new ProductNotFoundException(id));
     }

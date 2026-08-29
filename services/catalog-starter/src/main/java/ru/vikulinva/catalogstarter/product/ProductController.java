@@ -44,8 +44,10 @@ public class ProductController {
     }
 
     @GetMapping
-    public List<ProductView> search(@RequestParam(required = false) String query) {
-        return service.search(query).stream().map(ProductView::of).toList();
+    public List<ProductView> search(@RequestParam(required = false) String query,
+                                    @RequestParam(required = false) BigDecimal maxPrice) {
+        List<Product> found = maxPrice == null ? service.search(query) : service.cheaperThan(maxPrice);
+        return found.stream().map(ProductView::of).toList();
     }
 
     @GetMapping("/{id}")
