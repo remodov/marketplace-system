@@ -43,3 +43,10 @@ management:
   tracing:
     sampling:
       probability: 1.0
+
+search:
+  llm:
+    # Без адреса провайдера поиск работает как обычный текстовый — это нормальный режим.
+    base-url: ${LLM_BASE_URL:}
+    api-key: ${LLM_API_KEY:}
+    model: ${LLM_MODEL:gpt-4o-mini}

@@ -25,9 +25,12 @@ import java.util.UUID;
 public class ProductController {
 
     private final ProductService service;
+    private final ru.vikulinva.catalogstarter.search.NaturalSearchService naturalSearch;
 
-    public ProductController(ProductService service) {
+    public ProductController(ProductService service,
+                             ru.vikulinva.catalogstarter.search.NaturalSearchService naturalSearch) {
         this.service = service;
+        this.naturalSearch = naturalSearch;
     }
 
     public record CreateProductRequest(@NotBlank String title,
@@ -52,6 +55,11 @@ public class ProductController {
                                     @RequestParam(required = false) BigDecimal maxPrice) {
         List<Product> found = maxPrice == null ? service.search(query) : service.cheaperThan(maxPrice);
         return found.stream().map(ProductCard::of).toList();
+    }
+
+    @GetMapping("/search")
+    public List<ProductCard> naturalSearch(@RequestParam String q) {
+        return naturalSearch.search(q).stream().map(ProductCard::of).toList();
     }
 
     @GetMapping("/{id}")
