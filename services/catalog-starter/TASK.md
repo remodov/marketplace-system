@@ -52,5 +52,5 @@ PATCH /products/{id}/discount    {"percent": 20}
 
 ## Материал
 
-- Что такое DDD: https://vikulin-va.ru/domain-driven-design/01-what-is-ddd/
+- Что такое DDD: https://vikulin-va.ru/ddd/01-what-is-ddd/
 - Современная Java: https://vikulin-va.ru/java/records-and-modern/
