@@ -54,6 +54,8 @@ wiremock = { module = "org.wiremock:wiremock-standalone", version.ref = "wiremoc
 wiremock-jetty12 = { module = "org.wiremock:wiremock-jetty12", version.ref = "wiremock" }
 
 [plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version = "2.1.0" }
+kotlin-spring = { id = "org.jetbrains.kotlin.plugin.spring", version = "2.1.0" }
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 spring-dependency-management = { id = "io.spring.dependency-management", version = "1.1.7" }
 liquibase = { id = "org.liquibase.gradle", version = "2.2.2" }

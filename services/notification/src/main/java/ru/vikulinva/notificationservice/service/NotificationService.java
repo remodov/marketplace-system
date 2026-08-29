@@ -203,7 +203,7 @@ public class NotificationService {
 
         switch (n.getChannel()) {
             case EMAIL -> {
-                EmailProvider.Result r = emailProvider.send(n.getContact(), rendered.subject(), rendered.body());
+                EmailProvider.Result r = emailProvider.send(n.getContact(), rendered.getSubject(), rendered.getBody());
                 if (r instanceof EmailProvider.Result.Ok okR) {
                     result = DeliveryAttemptResult.OK;
                     externalId = okR.externalId();
@@ -219,7 +219,7 @@ public class NotificationService {
                 }
             }
             case PUSH -> {
-                PushProvider.Result r = pushProvider.send(n.getContact(), rendered.subject(), rendered.body());
+                PushProvider.Result r = pushProvider.send(n.getContact(), rendered.getSubject(), rendered.getBody());
                 if (r == PushProvider.Result.Ok.INSTANCE) {
                     result = DeliveryAttemptResult.OK;
                     ok = true;

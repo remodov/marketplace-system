@@ -6,6 +6,8 @@ import org.jooq.meta.jaxb.MatchersTableType
 
 plugins {
     java
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.spring)
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
     alias(libs.plugins.jooq.codegen)
@@ -21,7 +23,14 @@ java {
     }
 }
 
+kotlin {
+    jvmToolchain(libs.versions.java.get().toInt())
+}
+
 dependencies {
+    implementation("org.jetbrains.kotlin:kotlin-stdlib")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+
     implementation(libs.spring.boot.starter)
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.jooq)
