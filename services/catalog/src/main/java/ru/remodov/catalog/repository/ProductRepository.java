@@ -1,5 +1,6 @@
 package ru.remodov.catalog.repository;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -14,6 +15,8 @@ public interface ProductRepository {
     Optional<Product> findById(UUID id, SelectMode mode);
 
     void updateStatus(UUID id, Product.Status newStatus, OffsetDateTime updatedAt);
+
+    void updatePrice(UUID id, BigDecimal newPrice, OffsetDateTime updatedAt);
 
     PageView<Product> findBySeller(
         UUID sellerId,

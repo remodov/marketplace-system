@@ -128,6 +128,37 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
         '500': { $ref: '#/components/responses/InternalServerError' }
 
+  /api/v1/products/{productId}/price:
+    parameters:
+      - $ref: '#/components/parameters/ProductId'
+    patch:
+      tags: [Products]
+      operationId: changeProductPrice
+      summary: Изменить цену продукта
+      description: |
+        Меняет цену карточки. BR-P01 (price > 0).
+        ABAC: только владелец (BR-P04); чужой → 404 `OWN_PRODUCT_REQUIRED`.
+      security:
+        - bearerAuth: [seller]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePriceRequest'
+      responses:
+        '200':
+          description: Price changed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDto'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+
   /api/v1/products/my:
     get:
       tags: [Products]
@@ -221,6 +252,17 @@ components:
           type: string
           enum: [RUB]
           example: RUB
+
+    ChangePriceRequest:
+      type: object
+      required: [price]
+      properties:
+        price:
+          type: number
+          format: decimal
+          minimum: 0
+          exclusiveMinimum: true
+          example: 79990.00
 
     ProductDto:
       type: object

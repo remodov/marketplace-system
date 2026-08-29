@@ -22,6 +22,7 @@ public class AuditLogger {
 
     public static final String ACTION_PRODUCT_PUBLISHED = "PRODUCT_PUBLISHED";
     public static final String ACTION_PRODUCT_HIDDEN = "PRODUCT_HIDDEN";
+    public static final String ACTION_PRODUCT_PRICE_CHANGED = "PRODUCT_PRICE_CHANGED";
 
     private final AuditLogRepository repo;
     private final UuidGenerator uuidGenerator;

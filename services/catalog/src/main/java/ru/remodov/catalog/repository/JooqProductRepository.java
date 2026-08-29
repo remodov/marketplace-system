@@ -2,6 +2,7 @@ package ru.remodov.catalog.repository;
 
 import static ru.remodov.catalog.generated.Tables.PRODUCTS;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -42,6 +43,15 @@ public class JooqProductRepository implements ProductRepository {
     public void updateStatus(UUID id, Product.Status newStatus, OffsetDateTime updatedAt) {
         dsl.update(PRODUCTS)
             .set(PRODUCTS.STATUS, toDb(newStatus))
+            .set(PRODUCTS.UPDATED_AT, updatedAt)
+            .where(PRODUCTS.ID.eq(id))
+            .execute();
+    }
+
+    @Override
+    public void updatePrice(UUID id, BigDecimal newPrice, OffsetDateTime updatedAt) {
+        dsl.update(PRODUCTS)
+            .set(PRODUCTS.PRICE, newPrice)
             .set(PRODUCTS.UPDATED_AT, updatedAt)
             .where(PRODUCTS.ID.eq(id))
             .execute();
