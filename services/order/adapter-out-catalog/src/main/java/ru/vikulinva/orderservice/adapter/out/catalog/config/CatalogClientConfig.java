@@ -20,10 +20,10 @@ public class CatalogClientConfig {
     @Bean("catalogRestTemplate")
     public RestTemplate catalogRestTemplate(RestTemplateBuilder builder,
                                               @Value("${clients.catalog.base-url}") String baseUrl) {
+        // TODO шаг 8: клиент без таймаутов ждёт ответа сколько угодно —
+        // и держит поток, пока сосед «думает». SLA соседа описан в спеке.
         return builder
             .rootUri(baseUrl)
-            .connectTimeout(Duration.ofMillis(500))
-            .readTimeout(Duration.ofMillis(1000))
             .build();
     }
 }

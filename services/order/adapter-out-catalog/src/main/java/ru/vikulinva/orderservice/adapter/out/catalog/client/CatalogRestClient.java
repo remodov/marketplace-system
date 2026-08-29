@@ -1,19 +1,15 @@
 package ru.vikulinva.orderservice.adapter.out.catalog.client;
 
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.retry.annotation.Retry;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import ru.vikulinva.hexagonal.OutboundAdapter;
 import ru.vikulinva.orderservice.adapter.out.catalog.dto.CatalogProductResponse;
 import ru.vikulinva.orderservice.domain.valueobject.Money;
 import ru.vikulinva.orderservice.domain.valueobject.ProductId;
 import ru.vikulinva.orderservice.port.out.CatalogPort;
-import ru.vikulinva.orderservice.usecase.command.exception.CatalogUnavailableException;
 import ru.vikulinva.orderservice.usecase.command.exception.ProductNotFoundException;
 
 import java.util.Currency;
@@ -39,9 +35,11 @@ public class CatalogRestClient implements CatalogPort {
         this.restTemplate = restTemplate;
     }
 
+    // TODO шаг 8: сосед может отвечать медленно, срываться и лежать.
+    // Повтор и размыкатель включаются аннотациями resilience4j с именем инстанса
+    // INSTANCE; отказ должен превращаться в доменное исключение, а не утекать
+    // наружу типом из клиента Spring.
     @Override
-    @CircuitBreaker(name = INSTANCE, fallbackMethod = "fallback")
-    @Retry(name = INSTANCE)
     public Map<ProductId, Money> getPrices(List<ProductId> productIds) {
         Map<ProductId, Money> prices = new HashMap<>(productIds.size());
         for (ProductId productId : productIds) {
@@ -68,15 +66,7 @@ public class CatalogRestClient implements CatalogPort {
         }
     }
 
-    /** Fallback при открытом circuit breaker / отказе сетевого вызова. */
-    @SuppressWarnings("unused")
-    private Map<ProductId, Money> fallback(List<ProductId> productIds, Throwable t) {
-        if (t instanceof ProductNotFoundException pnf) {
-            throw pnf;
-        }
-        if (t instanceof ResourceAccessException raex) {
-            throw new CatalogUnavailableException(raex);
-        }
-        throw new CatalogUnavailableException(t);
-    }
+    // TODO шаг 8: метод-подстраховка на случай отказа.
+    // Осторожно: «товар не найден» — это не отказ соседа, и превращать одно
+    // в другое нельзя, иначе покупатель увидит 503 вместо 404.
 }

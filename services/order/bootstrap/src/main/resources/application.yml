@@ -45,36 +45,18 @@ management:
     tags:
       application: order-service
 
+# TODO шаг 8: настройки повторов и размыкателя для инстансов catalog и payment.
+# Сколько попыток, какая пауза между ними, на каких исключениях повторять —
+# и когда размыкатель перестаёт пропускать запросы к лежащему соседу.
 resilience4j:
   retry:
     instances:
-      catalog:
-        max-attempts: 2
-        wait-duration: 50ms
-        retry-exceptions:
-          - org.springframework.web.client.ResourceAccessException
       payment:
         max-attempts: 3
         wait-duration: 100ms
         retry-exceptions:
           - org.springframework.web.client.ResourceAccessException
           - org.springframework.web.client.HttpServerErrorException
-  circuitbreaker:
-    instances:
-      catalog:
-        sliding-window-size: 30
-        failure-rate-threshold: 50
-        wait-duration-in-open-state: 60s
-      payment:
-        sliding-window-size: 30
-        failure-rate-threshold: 50
-        wait-duration-in-open-state: 60s
-  timelimiter:
-    instances:
-      catalog:
-        timeout-duration: 1s
-      payment:
-        timeout-duration: 3s
 
 clients:
   catalog:
