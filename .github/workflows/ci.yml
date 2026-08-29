@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: catalog
+          POSTGRES_PASSWORD: catalog
+          POSTGRES_DB: catalog_starter
+        ports: ["5439:5432"]
+        options: >-
+          --health-cmd "pg_isready -U catalog"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Тесты стартового каталога
+        run: ./gradlew :catalog-starter:test --no-daemon
+
+      - name: Тесты платежей
+        run: cd services/payment && ./gradlew test --no-daemon
+
+      - name: Тесты BFF
+        run: cd services/bff && ./gradlew test --no-daemon
+
+      - name: Проверка манифестов и образа
+        run: python3 tools/check-deploy.py
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --prefix web || npm install --prefix web
+      - run: npm test --prefix web
