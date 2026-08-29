@@ -14,15 +14,12 @@ public record Payment(UUID id, UUID orderId, BigDecimal amount, String currency,
         FAILED;
 
         /**
-         * Разрешённые переходы. Всё, чего здесь нет, — запрещено:
-         * запрет по умолчанию честнее, чем перечисление запретов.
+         * TODO шаг 11: разрешённые переходы платежа.
+         * Перечисляй разрешённое, а не запрещённое: список запретов забывают
+         * дополнить, и дыра появляется молча.
          */
         public boolean canMoveTo(Status next) {
-            return switch (this) {
-                case AUTHORIZED -> next == CAPTURED || next == REFUNDED || next == FAILED;
-                case CAPTURED -> next == REFUNDED;
-                case REFUNDED, FAILED -> false;
-            };
+            return true;
         }
     }
 

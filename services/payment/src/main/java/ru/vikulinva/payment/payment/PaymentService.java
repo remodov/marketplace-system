@@ -25,13 +25,13 @@ public class PaymentService {
      */
     @Transactional
     public Payment authorize(UUID orderId, BigDecimal amount, String currency) {
-        return repository.findByOrderId(orderId).orElseGet(() -> {
-            Instant now = Instant.now(clock);
-            Payment payment = new Payment(UUID.randomUUID(), orderId, amount, currency,
-                Payment.Status.AUTHORIZED, now, now);
-            repository.insert(payment);
-            return payment;
-        });
+        // TODO шаг 11: заказ платят один раз. Сага повторяет шаги при сбоях —
+        // повторная авторизация того же заказа не должна создавать второй платёж.
+        Instant now = Instant.now(clock);
+        Payment payment = new Payment(UUID.randomUUID(), orderId, amount, currency,
+            Payment.Status.AUTHORIZED, now, now);
+        repository.insert(payment);
+        return payment;
     }
 
     @Transactional
@@ -45,10 +45,8 @@ public class PaymentService {
      */
     @Transactional
     public Payment refund(UUID paymentId) {
-        Payment payment = byId(paymentId);
-        if (payment.status() == Payment.Status.REFUNDED) {
-            return payment;
-        }
+        // TODO шаг 11: компенсация саги. Повторный возврат — это не второй возврат
+        // и не ошибка: сага повторяет шаг, деньги возвращаются один раз.
         return moveTo(paymentId, Payment.Status.REFUNDED);
     }
 
