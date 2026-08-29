@@ -64,9 +64,12 @@ public class Product {
         this.price = newPrice;
     }
 
-    // TODO шаг 4: скидка в процентах.
-    // Граница MAX_DISCOUNT_PERCENT уже объявлена выше — это часть правила, а не число из воздуха.
-    // Цена в рублях и копейках: округление задаётся явно, иначе получится хвост из копеек.
+    public void applyDiscount(int percent) {
+        // TODO шаг 4: уценить товар на percent процентов.
+        // Граница MAX_DISCOUNT_PERCENT объявлена выше — это часть правила, а не число из воздуха.
+        // Цена в рублях и копейках: округление задаётся явно, иначе останется хвост из копеек.
+        throw new UnsupportedOperationException("Шаг 4: скидка ещё не реализована");
+    }
 
     public void changeStock(int delta) {
         if (delta == 0) {
