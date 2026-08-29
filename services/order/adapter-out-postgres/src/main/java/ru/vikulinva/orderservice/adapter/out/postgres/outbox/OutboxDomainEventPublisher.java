@@ -36,15 +36,9 @@ public class OutboxDomainEventPublisher implements DomainEventPublisher {
 
     @Override
     public void publish(DomainEvent event) {
-        OutboxRecord record = dsl.newRecord(OUTBOX);
-        record.setId(event.getId());
-        record.setAggregateId(UUID.fromString(event.getAggregateId()));
-        record.setAggregateType(event.getAggregateType());
-        record.setEventType(event.getClass().getSimpleName());
-        record.setEventVersion(1);
-        record.setPayload(payloadSerializer.toPayload(event));
-        record.setOccurredAt(event.getCreatedAt());
-        record.setPublishedAt(null);
-        record.store();
+        // TODO шаг 10: положить событие в таблицу outbox — в той же транзакции,
+        // что и сам агрегат. Строка ждёт relay: published_at пока пустой.
+        // Колонки таблицы видно в сгенерированном классе OUTBOX.
+        throw new UnsupportedOperationException("Шаг 10: публикация через outbox не реализована");
     }
 }

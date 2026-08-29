@@ -24,38 +24,8 @@ import java.lang.reflect.RecordComponent;
 public class ExternalContractModule extends SimpleModule {
 
     public ExternalContractModule() {
-        addSerializer(ValueObject.class, new ValueObjectSerializer());
-    }
-
-    private static final class ValueObjectSerializer extends JsonSerializer<ValueObject> {
-
-        @Override
-        public void serialize(ValueObject value, JsonGenerator gen, SerializerProvider serializers)
-            throws IOException {
-            RecordComponent[] components = value.getClass().getRecordComponents();
-            if (components == null) {
-                gen.writeString(String.valueOf(value));
-                return;
-            }
-            if (components.length == 1) {
-                gen.writeObject(read(value, components[0]));
-                return;
-            }
-            gen.writeStartObject();
-            for (RecordComponent component : components) {
-                gen.writeFieldName(component.getName());
-                gen.writeObject(read(value, component));
-            }
-            gen.writeEndObject();
-        }
-
-        private Object read(ValueObject value, RecordComponent component) {
-            try {
-                return component.getAccessor().invoke(value);
-            } catch (ReflectiveOperationException e) {
-                throw new IllegalStateException(
-                    "Не прочитать компонент " + component.getName() + " у " + value.getClass().getSimpleName(), e);
-            }
-        }
+        // TODO шаг 10: научить сериализацию правилам внешнего контракта.
+        // Value object из одного поля — скаляр; составной — свои компоненты,
+        // и только они.
     }
 }

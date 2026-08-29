@@ -18,7 +18,10 @@ public class EventPayloadSerializer {
     private final ObjectMapper objectMapper;
 
     public EventPayloadSerializer(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper.copy().registerModule(new ExternalContractModule());
+        // TODO шаг 10: у внешнего события свои правила сериализации.
+        // Общий ObjectMapper приложения пишет внутренние типы как есть — посмотри
+        // тестом, что при этом уезжает в payload.
+        this.objectMapper = objectMapper;
     }
 
     public JSONB toPayload(DomainEvent event) {
