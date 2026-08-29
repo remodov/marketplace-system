@@ -1,0 +1,104 @@
+spring:
+  application:
+    name: order-service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # На local dev укажите Keycloak / dev-IdP. На prod — через env.
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8081/realms/marketplace/protocol/openid-connect/certs}
+  datasource:
+    url: jdbc:postgresql://localhost:5432/orders
+    username: orders
+    password: orders
+    hikari:
+      maximum-pool-size: 20
+  jooq:
+    sql-dialect: postgres
+  liquibase:
+    change-log: classpath:db/changelog-master.yaml
+    contexts: production
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      group-id: order-service
+      auto-offset-reset: earliest
+  cache:
+    type: simple
+
+server:
+  port: 8080
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: order-service
+
+resilience4j:
+  retry:
+    instances:
+      catalog:
+        max-attempts: 2
+        wait-duration: 50ms
+        retry-exceptions:
+          - org.springframework.web.client.ResourceAccessException
+      payment:
+        max-attempts: 3
+        wait-duration: 100ms
+        retry-exceptions:
+          - org.springframework.web.client.ResourceAccessException
+          - org.springframework.web.client.HttpServerErrorException
+  circuitbreaker:
+    instances:
+      catalog:
+        sliding-window-size: 30
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 60s
+      payment:
+        sliding-window-size: 30
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 60s
+  timelimiter:
+    instances:
+      catalog:
+        timeout-duration: 1s
+      payment:
+        timeout-duration: 3s
+
+clients:
+  catalog:
+    base-url: http://localhost:9001
+  payment:
+    base-url: http://localhost:9002
+
+orderservice:
+  kafka:
+    events-topic: marketplace.orders.v1   # outbox-relay publishes here
+    payment-topic: marketplace.payments.v1
+    inventory-topic: marketplace.inventory.v1
+  outbox:
+    poll-interval-ms: 1000        # how often Outbox-relay scans pending events
+    batch-size: 100               # max events per tick
+  expire-unpaid:
+    fixed-delay-ms: 60000         # ms — checks for PENDING_PAYMENT > timeout
+    timeout-minutes: 15           # BR-006
+    batch-size: 200
+  close-delivered:
+    cron: "0 0 4 * * *"           # daily 04:00
+    window-days: 14
+    batch-size: 1000
+
+logging:
+  level:
+    ru.vikulinva.orderservice: DEBUG

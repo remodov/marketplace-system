@@ -1,0 +1,276 @@
+# Order Service — initial schema (v-1.0).
+# Источник: docs/spec/03-order-service-model.md §3.5 + §8 + §9 + §12 + §6 BR-010.
+
+databaseChangeLog:
+  # 1. Enums ---------------------------------------------------------------
+  - changeSet:
+      id: v-1.0-create-order-status-enum
+      author: vikulin
+      changes:
+        - sql:
+            sql: |-
+              CREATE TYPE order_status AS ENUM (
+                'DRAFT', 'PENDING_PAYMENT', 'PAID', 'SHIPPED', 'DELIVERED',
+                'COMPLETED', 'EXPIRED', 'CANCELLED', 'DISPUTE', 'REFUNDED'
+              )
+
+  - changeSet:
+      id: v-1.0-create-refund-saga-status-enum
+      author: vikulin
+      changes:
+        - sql:
+            sql: |-
+              CREATE TYPE refund_saga_status AS ENUM (
+                'STARTED', 'INVENTORY_RELEASED', 'PAYMENT_REFUNDING', 'COMPLETED', 'FAILED'
+              )
+
+  # 2. Write-side: orders + order_items -----------------------------------
+  - changeSet:
+      id: v-1.0-create-orders-table
+      author: vikulin
+      changes:
+        - createTable:
+            tableName: orders
+            columns:
+              - column: { name: id,                type: uuid,           constraints: { primaryKey: true, primaryKeyName: orders_pkey, nullable: false } }
+              - column: { name: customer_id,       type: uuid,           constraints: { nullable: false } }
+              - column: { name: seller_id,         type: uuid,           constraints: { nullable: false } }
+              - column: { name: status,            type: order_status,   constraints: { nullable: false } }
+              - column: { name: currency,          type: "char(3)",        constraints: { nullable: false }, defaultValue: "RUB" }
+              - column: { name: total_amount,      type: "numeric(15, 2)", constraints: { nullable: false } }
+              - column: { name: discount_amount,   type: "numeric(15, 2)" }
+              - column: { name: shipping_fee,      type: "numeric(15, 2)", constraints: { nullable: false } }
+              - column: { name: shipping_address,  type: jsonb,          constraints: { nullable: false } }
+              - column: { name: reservation_id,    type: uuid }
+              - column: { name: payment_id,        type: uuid }
+              - column: { name: created_at,        type: timestamptz,    constraints: { nullable: false } }
+              - column: { name: updated_at,        type: timestamptz,    constraints: { nullable: false } }
+              - column: { name: paid_at,           type: timestamptz }
+              - column: { name: shipped_at,        type: timestamptz }
+              - column: { name: delivered_at,      type: timestamptz }
+              - column: { name: closed_at,         type: timestamptz }
+
+  - changeSet:
+      id: v-1.0-create-order-items-table
+      author: vikulin
+      changes:
+        - createTable:
+            tableName: order_items
+            columns:
+              - column: { name: id,         type: uuid,           constraints: { primaryKey: true, primaryKeyName: order_items_pkey, nullable: false } }
+              - column: { name: order_id,   type: uuid,           constraints: { nullable: false, foreignKeyName: fk_order_items_order, references: "orders(id)", deleteCascade: true } }
+              - column: { name: product_id, type: uuid,           constraints: { nullable: false } }
+              - column: { name: seller_id,  type: uuid,           constraints: { nullable: false } }
+              - column: { name: quantity,   type: int,            constraints: { nullable: false } }
+              - column: { name: unit_price, type: "numeric(15, 2)", constraints: { nullable: false } }
+        - sql:
+            sql: |-
+              ALTER TABLE order_items
+                ADD CONSTRAINT order_items_quantity_range CHECK (quantity > 0 AND quantity <= 999),
+                ADD CONSTRAINT order_items_unit_price_nonneg CHECK (unit_price >= 0),
+                ADD CONSTRAINT order_items_product_seller_unique UNIQUE (order_id, product_id, seller_id)
+
+  - changeSet:
+      id: v-1.0-create-orders-indexes
+      author: vikulin
+      changes:
+        - createIndex:
+            tableName: orders
+            indexName: idx_orders_customer_status_created
+            columns:
+              - column: { name: customer_id }
+              - column: { name: status }
+              - column: { name: created_at, descending: true }
+        - createIndex:
+            tableName: orders
+            indexName: idx_orders_seller_status_created
+            columns:
+              - column: { name: seller_id }
+              - column: { name: status }
+              - column: { name: created_at, descending: true }
+        - createIndex:
+            tableName: orders
+            indexName: idx_orders_status_created
+            columns:
+              - column: { name: status }
+              - column: { name: created_at }
+        # Partial indexes для шедулеров — определяются через raw SQL.
+        - sql:
+            sql: |-
+              CREATE INDEX idx_orders_pending_payment_created ON orders (created_at)
+                WHERE status = 'PENDING_PAYMENT'
+        - sql:
+            sql: |-
+              CREATE INDEX idx_orders_delivered_created ON orders (delivered_at)
+                WHERE status = 'DELIVERED'
+        - createIndex:
+            tableName: order_items
+            indexName: idx_order_items_product
+            columns:
+              - column: { name: product_id }
+
+  # 3. Outbox + idempotency + processed events ----------------------------
+  - changeSet:
+      id: v-1.0-create-outbox-table
+      author: vikulin
+      changes:
+        - createTable:
+            tableName: outbox
+            columns:
+              - column: { name: id,             type: uuid,         constraints: { primaryKey: true, primaryKeyName: outbox_pkey, nullable: false } }
+              - column: { name: aggregate_id,   type: uuid,         constraints: { nullable: false } }
+              - column: { name: aggregate_type, type: "varchar(64)",  constraints: { nullable: false } }
+              - column: { name: event_type,     type: "varchar(128)", constraints: { nullable: false } }
+              - column: { name: event_version,  type: int,          constraints: { nullable: false }, defaultValueNumeric: 1 }
+              - column: { name: payload,        type: jsonb,        constraints: { nullable: false } }
+              - column: { name: occurred_at,    type: timestamptz,  constraints: { nullable: false } }
+              - column: { name: published_at,   type: timestamptz }
+        - sql:
+            sql: |-
+              CREATE INDEX idx_outbox_unpublished ON outbox (occurred_at) WHERE published_at IS NULL
+        - createIndex:
+            tableName: outbox
+            indexName: idx_outbox_aggregate
+            columns:
+              - column: { name: aggregate_id }
+              - column: { name: occurred_at }
+
+  - changeSet:
+      id: v-1.0-create-idempotency-keys-table
+      author: vikulin
+      changes:
+        - createTable:
+            tableName: idempotency_keys
+            columns:
+              - column: { name: idempotency_key, type: "varchar(128)", constraints: { primaryKey: true, primaryKeyName: idempotency_keys_pkey, nullable: false } }
+              - column: { name: request_hash,    type: "varchar(64)",  constraints: { nullable: false } }
+              - column: { name: order_id,        type: uuid,         constraints: { nullable: false } }
+              - column: { name: created_at,      type: timestamptz,  constraints: { nullable: false } }
+
+  - changeSet:
+      id: v-1.0-create-processed-events-table
+      author: vikulin
+      changes:
+        - createTable:
+            tableName: processed_events
+            columns:
+              - column: { name: event_id,     type: uuid,         constraints: { primaryKey: true, primaryKeyName: processed_events_pkey, nullable: false } }
+              - column: { name: event_type,   type: "varchar(128)", constraints: { nullable: false } }
+              - column: { name: processed_at, type: timestamptz,  constraints: { nullable: false } }
+        - createIndex:
+            tableName: processed_events
+            indexName: idx_processed_events_processed_at
+            columns:
+              - column: { name: processed_at }
+
+  # 4. Saga state ---------------------------------------------------------
+  - changeSet:
+      id: v-1.0-create-refund-sagas-table
+      author: vikulin
+      changes:
+        - createTable:
+            tableName: refund_sagas
+            columns:
+              - column: { name: id,              type: uuid,                constraints: { primaryKey: true, primaryKeyName: refund_sagas_pkey, nullable: false } }
+              - column: { name: order_id,        type: uuid,                constraints: { nullable: false, foreignKeyName: fk_refund_sagas_order, references: "orders(id)" } }
+              - column: { name: status,          type: refund_saga_status,  constraints: { nullable: false } }
+              - column: { name: started_at,      type: timestamptz,         constraints: { nullable: false } }
+              - column: { name: completed_at,    type: timestamptz }
+              - column: { name: failure_reason,  type: "varchar(256)" }
+        - createIndex:
+            tableName: refund_sagas
+            indexName: idx_refund_sagas_order
+            columns:
+              - column: { name: order_id }
+        - sql:
+            sql: |-
+              CREATE INDEX idx_refund_sagas_status_started ON refund_sagas (status, started_at)
+                WHERE status NOT IN ('COMPLETED', 'FAILED')
+
+  # 5. Read Model ---------------------------------------------------------
+  - changeSet:
+      id: v-1.0-create-order-summaries-table
+      author: vikulin
+      changes:
+        - createTable:
+            tableName: order_summaries
+            columns:
+              - column: { name: order_id,            type: uuid,           constraints: { primaryKey: true, primaryKeyName: order_summaries_pkey, nullable: false } }
+              - column: { name: customer_id,         type: uuid,           constraints: { nullable: false } }
+              - column: { name: primary_seller_id,   type: uuid,           constraints: { nullable: false } }
+              - column: { name: status,              type: order_status,   constraints: { nullable: false } }
+              - column: { name: total_amount,        type: "numeric(15, 2)", constraints: { nullable: false } }
+              - column: { name: currency,            type: "char(3)",        constraints: { nullable: false } }
+              - column: { name: items_count,         type: int,            constraints: { nullable: false } }
+              - column: { name: first_product_title, type: "varchar(256)" }
+              - column: { name: created_at,          type: timestamptz,    constraints: { nullable: false } }
+              - column: { name: updated_at,          type: timestamptz,    constraints: { nullable: false } }
+        - createIndex:
+            tableName: order_summaries
+            indexName: idx_summaries_customer
+            columns:
+              - column: { name: customer_id }
+              - column: { name: status }
+              - column: { name: created_at, descending: true }
+        - createIndex:
+            tableName: order_summaries
+            indexName: idx_summaries_seller
+            columns:
+              - column: { name: primary_seller_id }
+              - column: { name: status }
+              - column: { name: created_at, descending: true }
+        - createIndex:
+            tableName: order_summaries
+            indexName: idx_summaries_status_created
+            columns:
+              - column: { name: status }
+              - column: { name: created_at }
+
+  - changeSet:
+      id: v-1.0-create-order-timelines-table
+      author: vikulin
+      changes:
+        - createTable:
+            tableName: order_timelines
+            columns:
+              - column: { name: id,          type: uuid,         constraints: { primaryKey: true, primaryKeyName: order_timelines_pkey, nullable: false } }
+              - column: { name: order_id,    type: uuid,         constraints: { nullable: false, foreignKeyName: fk_timeline_order, references: "orders(id)", deleteCascade: true } }
+              - column: { name: event_type,  type: "varchar(128)", constraints: { nullable: false } }
+              - column: { name: occurred_at, type: timestamptz,  constraints: { nullable: false } }
+              - column: { name: actor_type,  type: "varchar(32)",  constraints: { nullable: false } }
+              - column: { name: actor_id,    type: uuid }
+              - column: { name: metadata,    type: jsonb,        constraints: { nullable: false }, defaultValueComputed: "'{}'::jsonb" }
+        - createIndex:
+            tableName: order_timelines
+            indexName: idx_timeline_order_time
+            columns:
+              - column: { name: order_id }
+              - column: { name: occurred_at }
+
+  # 6. Audit log ----------------------------------------------------------
+  - changeSet:
+      id: v-1.0-create-order-audit-log-table
+      author: vikulin
+      changes:
+        - createTable:
+            tableName: order_audit_log
+            columns:
+              - column: { name: id,           type: bigserial,    constraints: { primaryKey: true, primaryKeyName: order_audit_log_pkey, nullable: false } }
+              - column: { name: order_id,     type: uuid,         constraints: { nullable: false } }
+              - column: { name: actor_type,   type: "varchar(32)",  constraints: { nullable: false } }
+              - column: { name: actor_id,     type: uuid }
+              - column: { name: action,       type: "varchar(128)", constraints: { nullable: false } }
+              - column: { name: metadata,     type: jsonb,        constraints: { nullable: false }, defaultValueComputed: "'{}'::jsonb" }
+              - column: { name: occurred_at,  type: timestamptz,  constraints: { nullable: false } }
+        - createIndex:
+            tableName: order_audit_log
+            indexName: idx_order_audit_order
+            columns:
+              - column: { name: order_id }
+              - column: { name: occurred_at }
+        - createIndex:
+            tableName: order_audit_log
+            indexName: idx_order_audit_actor
+            columns:
+              - column: { name: actor_id }
+              - column: { name: occurred_at }

@@ -1,0 +1,46 @@
+# Профиль для интеграционных тестов: см. test-strategy
+# - PostgreSQL поднимается через @ServiceConnection в BaseIntegrationTest
+# - Kafka выключен; @MockitoBean DomainEventPublisher (или своя in-memory подмена)
+# - Redis-кэш — none
+
+spring:
+  cache:
+    type: none
+  flyway:
+    locations: classpath:db/migration
+  kafka:
+    bootstrap-servers: dummy:0     # не используется в тестах
+    producer:
+      bootstrap-servers: dummy:0
+    consumer:
+      bootstrap-servers: dummy:0
+      group-id: order-service-it
+    listener:
+      auto-startup: false          # Kafka-консьюмеры не стартуют — тесты вызывают методы напрямую
+
+# WireMock-стабы для Catalog/Payment поднимаются в BaseIntegrationTest
+clients:
+  catalog:
+    base-url: http://wiremock-catalog/   # будет переопределён через @DynamicPropertySource
+  payment:
+    base-url: http://wiremock-payment/
+
+# Шедулеры в тестах не запускаем — вызываем job-ы вручную через .tick()
+orderservice:
+  kafka:
+    events-topic: it.orders.v1
+  outbox:
+    poll-interval-ms: 86400000      # 1 day, effectively disabled
+  expire-unpaid:
+    fixed-delay-ms: 86400000
+    timeout-minutes: 15
+    batch-size: 200
+  close-delivered:
+    cron: "0 0 4 1 1 *"             # 04:00 of 1 January only — never fires in tests
+    window-days: 14
+    batch-size: 1000
+
+logging:
+  level:
+    org.springframework: WARN
+    ru.vikulinva.orderservice: DEBUG

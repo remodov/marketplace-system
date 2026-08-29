@@ -1,0 +1,754 @@
+openapi: 3.0.3
+
+info:
+  title: Order Service API
+  description: |
+    REST API для оформления заказов на маркетплейсе.
+
+    Контракт следует [REST API Style Guide](https://vikulin-va.ru/rest-api-style-guide/):
+    URL в kebab-case + множественное число, ошибки в формате RFC 9457
+    `application/problem+json`, поля JSON в camelCase, идентификаторы — UUID.
+
+    Источник правды: `docs/spec/order-service.md` §7 Commands, §9 Queries,
+    §13 Errors.
+  version: 1.0.0
+  contact:
+    name: Order Service team
+    url: https://vikulin-va.ru/case/order-service/
+
+servers:
+  - url: https://api.example.com
+    description: Production
+  - url: http://localhost:8080
+    description: Local dev
+
+tags:
+  - name: orders
+    description: Жизненный цикл заказа
+
+# =============================================================================
+# Paths
+# =============================================================================
+
+paths:
+  /api/v1/orders:
+    get:
+      tags: [orders]
+      operationId: listMyOrders
+      summary: Список заказов покупателя
+      description: |
+        Возвращает страницу заказов текущего покупателя. Сортировка —
+        `createdAt DESC`. Опциональный фильтр по статусу.
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [DRAFT, PENDING_PAYMENT, PAID, SHIPPED, DELIVERED, COMPLETED, EXPIRED, CANCELLED, DISPUTE, REFUNDED]
+        - name: page
+          in: query
+          required: false
+          schema: { type: integer, minimum: 0, default: 0 }
+        - name: size
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        '200':
+          description: Страница заказов.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderSummaryPage' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      tags: [orders]
+      operationId: createOrder
+      summary: Создать заказ
+      description: |
+        Создаёт новый заказ в статусе `DRAFT`. Идемпотентно по заголовку
+        `Idempotency-Key` (BR-010): повторный запрос с тем же ключом
+        возвращает тот же `orderId`, не создаёт дубль.
+
+        Все позиции в заказе должны быть от одного продавца (BR-014).
+        Цены валидируются через Catalog Service.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          description: Заказ создан.
+          headers:
+            Location:
+              description: URI созданного ресурса.
+              schema: { type: string, example: /api/v1/orders/0fd3b2c4-1e23-4a5b-8c91-2d4e6f8a0b12 }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/v1/seller/orders:
+    get:
+      tags: [orders]
+      operationId: listSellerOrders
+      summary: Список заказов продавца
+      description: |
+        Возвращает страницу заказов, в которых продавец — текущий пользователь.
+        Сортировка по `createdAt DESC`. Доступно только роли `seller`/`admin`.
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [DRAFT, PENDING_PAYMENT, PAID, SHIPPED, DELIVERED, COMPLETED, EXPIRED, CANCELLED, DISPUTE, REFUNDED]
+        - name: page
+          in: query
+          required: false
+          schema: { type: integer, minimum: 0, default: 0 }
+        - name: size
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        '200':
+          description: Страница заказов продавца.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderSummaryPage' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/orders/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+        description: Идентификатор заказа.
+    get:
+      tags: [orders]
+      operationId: getOrderById
+      summary: Получить заказ по идентификатору
+      description: |
+        Возвращает заказ. Доступен покупателю-владельцу, продавцу со своими
+        товарами в заказе или оператору (BR-008, см. §5 Roles).
+      responses:
+        '200':
+          description: Заказ найден.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/orders/{id}/confirm:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+        description: Идентификатор заказа.
+    post:
+      tags: [orders]
+      operationId: confirmOrder
+      summary: Подтвердить заказ (DRAFT → PENDING_PAYMENT)
+      description: |
+        Покупатель подтверждает заказ из черновика. Заказ переходит в
+        `PENDING_PAYMENT`, публикуется `OrderConfirmed` (Inventory резервирует
+        остаток). См. §7 Commands и §4 жизненный цикл.
+
+        Требует `BR-013` (минимальная сумма 100 ₽) и `BR-002` (≥ 1 позиция).
+        Проверяется ABAC: только владелец заказа или admin.
+      responses:
+        '200':
+          description: Заказ подтверждён.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          description: |
+            Бизнес-инвариант не выполнен (`ORDER_BELOW_MINIMUM`, `EMPTY_ORDER`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetails' }
+
+  /api/v1/orders/{id}/pay:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+        description: Идентификатор заказа.
+    post:
+      tags: [orders]
+      operationId: payOrder
+      summary: Подтвердить оплату (webhook от Payment Service)
+      description: |
+        Внутренний эндпоинт: Payment Service вызывает его при успешной
+        оплате. Перевод заказа `PENDING_PAYMENT → PAID`. Идемпотентен по
+        `paymentId`: повторный вызов с тем же платежом — no-op.
+
+        Production требует HMAC/JWT-проверку источника; здесь упрощённо
+        полагаемся на сетевой контур.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PayOrderRequest' }
+      responses:
+        '200':
+          description: Заказ оплачен.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/v1/orders/{id}/ship:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [orders]
+      operationId: shipOrder
+      summary: Передать заказ в доставку (продавец)
+      description: |
+        Перевод `PAID → SHIPPED`. Доступно только продавцу-владельцу
+        заказа (ABAC) и admin.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ShipOrderRequest' }
+      responses:
+        '200':
+          description: Заказ передан в доставку.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/v1/orders/{id}/deliver:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [orders]
+      operationId: deliverOrder
+      summary: Подтвердить получение (покупатель)
+      description: |
+        Перевод `SHIPPED → DELIVERED`. Доступно только владельцу заказа.
+      responses:
+        '200':
+          description: Доставка подтверждена.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/v1/orders/{id}/dispute:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [orders]
+      operationId: openDispute
+      summary: Открыть спор по доставленному заказу (покупатель)
+      description: |
+        Перевод `DELIVERED → DISPUTE`. Покупатель указывает причину;
+        оператор поддержки увидит спор в своём очереди и закроет его
+        через `resolveDispute`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OpenDisputeRequest' }
+      responses:
+        '200':
+          description: Спор открыт.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/v1/orders/{id}/dispute/resolve:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [orders]
+      operationId: resolveDispute
+      summary: Закрыть спор (оператор)
+      description: |
+        Перевод `DISPUTE → COMPLETED` (отклонить) либо `DISPUTE → REFUNDED`
+        (удовлетворить). При `REFUNDED` подписчик `DisputeResolved`
+        запускает refund-сагу через Payment.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ResolveDisputeRequest' }
+      responses:
+        '200':
+          description: Спор закрыт.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/v1/orders/{id}/cancel:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+        description: Идентификатор заказа.
+    post:
+      tags: [orders]
+      operationId: cancelOrder
+      summary: Отменить заказ (только до оплаты)
+      description: |
+        Покупатель отменяет заказ. Допустимо только из статусов `DRAFT`
+        и `PENDING_PAYMENT`. Заказ переходит в `CANCELLED`, публикуется
+        `OrderCancelled` (Inventory освобождает резерв). См. UC-3.
+
+        Отмена после оплаты выполняется отдельным UC через refund-сагу.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CancelOrderRequest' }
+      responses:
+        '200':
+          description: Заказ отменён.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+# =============================================================================
+# Components
+# =============================================================================
+
+components:
+
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: |
+        UUID, обеспечивающий идемпотентность создания заказа (BR-010).
+        Повторный запрос с тем же ключом и тем же телом возвращает прежний
+        `orderId`. С тем же ключом и другим телом — `409 IDEMPOTENCY_KEY_CONFLICT`.
+      schema:
+        type: string
+        format: uuid
+        example: 7c3a9f12-4b1e-4c8a-9d6f-1a2b3c4d5e6f
+
+  schemas:
+
+    # ----- Запросы и ответы --------------------------------------------------
+
+    CreateOrderRequest:
+      type: object
+      required: [items, shippingAddress]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items: { $ref: '#/components/schemas/CreateOrderItem' }
+        shippingAddress: { $ref: '#/components/schemas/Address' }
+        promoCode:
+          type: string
+          maxLength: 64
+          description: Опциональный промокод. Применение — отдельной командой ApplyPromo (UC расширим в следующих UC).
+
+    OpenDisputeRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason: { type: string, minLength: 1, maxLength: 500 }
+
+    ResolveDisputeRequest:
+      type: object
+      required: [decision, note]
+      properties:
+        decision:
+          type: string
+          enum: [COMPLETED, REFUNDED]
+          description: |
+            `COMPLETED` — спор отклонён, заказ финализируется в пользу продавца.
+            `REFUNDED` — спор удовлетворён, инициируется refund.
+        note:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          description: Пояснение оператора, попадает в DisputeResolved.
+
+    PayOrderRequest:
+      type: object
+      required: [paymentId]
+      properties:
+        paymentId: { type: string, format: uuid }
+
+    ShipOrderRequest:
+      type: object
+      required: [trackingNumber]
+      properties:
+        trackingNumber: { type: string, minLength: 1, maxLength: 64 }
+
+    OrderSummary:
+      type: object
+      required: [id, customerId, sellerId, status, currency, totalAmount, itemsCount, createdAt]
+      properties:
+        id:           { type: string, format: uuid }
+        customerId:   { type: string, format: uuid }
+        sellerId:     { type: string, format: uuid }
+        status:
+          type: string
+          enum: [DRAFT, PENDING_PAYMENT, PAID, SHIPPED, DELIVERED, COMPLETED, EXPIRED, CANCELLED, DISPUTE, REFUNDED]
+        currency:     { type: string, example: RUB }
+        totalAmount:  { type: string, example: "1900.00" }
+        itemsCount:   { type: integer, minimum: 0 }
+        createdAt:    { type: string, format: date-time }
+
+    OrderSummaryPage:
+      type: object
+      required: [items, total, page, size, hasNext]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/OrderSummary' }
+        total:    { type: integer, format: int64, minimum: 0 }
+        page:     { type: integer, minimum: 0 }
+        size:     { type: integer, minimum: 1, maximum: 100 }
+        hasNext:  { type: boolean }
+
+    CancelOrderRequest:
+      type: object
+      required: [reasonCode]
+      properties:
+        reasonCode:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: |
+            Код причины отмены. Свободный enum-like, используется аналитикой:
+            `CHANGED_MIND`, `FOUND_BETTER_PRICE`, `DELIVERY_TOO_LONG`, etc.
+        comment:
+          type: string
+          maxLength: 500
+          description: Опциональный свободный текст пользователя.
+
+    CreateOrderItem:
+      type: object
+      required: [productId, sellerId, quantity]
+      properties:
+        productId: { type: string, format: uuid }
+        sellerId:  { type: string, format: uuid }
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 999
+
+    Order:
+      type: object
+      required: [id, customerId, sellerId, status, currency, totalAmount, items, shippingFee, shippingAddress, createdAt, updatedAt]
+      properties:
+        id:           { type: string, format: uuid }
+        customerId:   { type: string, format: uuid }
+        sellerId:     { type: string, format: uuid }
+        status:       { $ref: '#/components/schemas/OrderStatus' }
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          example: RUB
+        totalAmount:  { $ref: '#/components/schemas/MonetaryAmount' }
+        discountAmount: { $ref: '#/components/schemas/MonetaryAmount' }
+        shippingFee:  { $ref: '#/components/schemas/MonetaryAmount' }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/OrderItem' }
+        shippingAddress: { $ref: '#/components/schemas/Address' }
+        reservationId: { type: string, format: uuid, nullable: true }
+        paymentId:    { type: string, format: uuid, nullable: true }
+        createdAt:    { type: string, format: date-time }
+        updatedAt:    { type: string, format: date-time }
+        paidAt:       { type: string, format: date-time, nullable: true }
+        shippedAt:    { type: string, format: date-time, nullable: true }
+        deliveredAt:  { type: string, format: date-time, nullable: true }
+        closedAt:     { type: string, format: date-time, nullable: true }
+
+    OrderItem:
+      type: object
+      required: [id, productId, sellerId, quantity, unitPrice]
+      properties:
+        id:        { type: string, format: uuid }
+        productId: { type: string, format: uuid }
+        sellerId:  { type: string, format: uuid }
+        quantity:  { type: integer, minimum: 1, maximum: 999 }
+        unitPrice: { $ref: '#/components/schemas/MonetaryAmount' }
+
+    OrderStatus:
+      type: string
+      description: |
+        Текущий статус заказа. Терминальные: `COMPLETED`, `EXPIRED`, `REFUNDED`.
+        Полный жизненный цикл — спека §4.
+      enum:
+        - DRAFT
+        - PENDING_PAYMENT
+        - PAID
+        - SHIPPED
+        - DELIVERED
+        - COMPLETED
+        - EXPIRED
+        - CANCELLED
+        - DISPUTE
+        - REFUNDED
+
+    MonetaryAmount:
+      type: string
+      pattern: '^\d+\.\d{2}$'
+      description: |
+        Сумма в рублях, строкой, два знака после запятой. Решение —
+        избегать `number` с плавающей точкой в JSON (см. REST API Style Guide).
+      example: "12345.67"
+
+    Address:
+      type: object
+      required: [country, city, street, postalCode]
+      properties:
+        country:
+          type: string
+          minLength: 2
+          maxLength: 2
+          description: Код страны ISO 3166-1 alpha-2.
+          example: RU
+        city:        { type: string, maxLength: 128 }
+        street:      { type: string, maxLength: 256 }
+        postalCode:  { type: string, maxLength: 16 }
+        pickupCode:
+          type: string
+          maxLength: 32
+          nullable: true
+          description: Код ПВЗ; null, если доставка курьером по адресу.
+
+    # ----- Ошибки (RFC 9457 ProblemDetails) ----------------------------------
+
+    ProblemDetails:
+      type: object
+      required: [type, title, status, code]
+      properties:
+        type:
+          type: string
+          format: uri
+          description: URI типа ошибки (стабильный идентификатор для документации).
+          example: https://vikulin-va.ru/errors/order-invalid-state
+        title:
+          type: string
+          description: Короткое человекочитаемое описание (для разработчиков).
+          example: Order is not in a valid state for this action
+        status:
+          type: integer
+          description: HTTP-код, дублирующий код ответа.
+          example: 409
+        code:
+          $ref: '#/components/schemas/ErrorCode'
+        detail:
+          type: string
+          description: Детальное сообщение для конкретного экземпляра.
+        instance:
+          type: string
+          description: URI вызвавшего эндпоинта (`/api/v1/orders/...`).
+        violations:
+          type: array
+          description: Только для 400 при валидации полей.
+          items: { $ref: '#/components/schemas/Violation' }
+
+    Violation:
+      type: object
+      required: [field, message]
+      properties:
+        field:
+          type: string
+          description: Имя поля JSON (точечная нотация).
+          example: items[0].quantity
+        message:
+          type: string
+          example: must be between 1 and 999
+
+    ErrorCode:
+      type: string
+      description: Машинный код ошибки. Полный каталог — спека §13.
+      enum:
+        - ORDER_NOT_FOUND
+        - ORDER_INVALID_STATE
+        - EMPTY_ORDER
+        - ORDER_BELOW_MINIMUM
+        - MULTI_SELLER_NOT_SUPPORTED
+        - OUT_OF_STOCK
+        - PRODUCT_NOT_FOUND
+        - PROMO_INVALID
+        - PROMO_NOT_APPLICABLE
+        - PROMO_ALREADY_APPLIED
+        - PAYMENT_FAILED
+        - PAYMENT_TIMEOUT
+        - REFUND_TOO_LATE
+        - DISPUTE_ALREADY_OPEN
+        - FORBIDDEN
+        - UNAUTHORIZED
+        - IDEMPOTENCY_KEY_CONFLICT
+        - SERVICE_DEGRADED
+        - INTERNAL_ERROR
+
+  responses:
+    BadRequest:
+      description: Запрос синтаксически невалиден или нарушает простые правила (`EMPTY_ORDER`, `ORDER_BELOW_MINIMUM`, `MULTI_SELLER_NOT_SUPPORTED`, `PROMO_INVALID`, `PROMO_NOT_APPLICABLE`).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+          examples:
+            multiSeller:
+              summary: BR-014 нарушено
+              value:
+                type: https://vikulin-va.ru/errors/multi-seller-not-supported
+                title: Order must contain items from a single seller
+                status: 400
+                code: MULTI_SELLER_NOT_SUPPORTED
+                detail: Found 2 distinct sellers in items
+                instance: /api/v1/orders
+
+    Unauthorized:
+      description: JWT отсутствует или невалиден.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+
+    Forbidden:
+      description: Аутентифицирован, но не имеет прав на ресурс (ABAC, BR-008).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+
+    NotFound:
+      description: Ресурс не существует или скрыт ABAC.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+
+    Conflict:
+      description: Бизнес-инвариант нарушен (`OUT_OF_STOCK`, `ORDER_INVALID_STATE`, `IDEMPOTENCY_KEY_CONFLICT`, `PROMO_ALREADY_APPLIED`).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+          examples:
+            outOfStock:
+              summary: Резерв не удался
+              value:
+                type: https://vikulin-va.ru/errors/out-of-stock
+                title: Item is out of stock
+                status: 409
+                code: OUT_OF_STOCK
+                detail: One or more items have insufficient stock
+                instance: /api/v1/orders
+
+    ServiceUnavailable:
+      description: Catalog или Payment временно недоступен (`SERVICE_DEGRADED`, `PAYMENT_TIMEOUT`).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT от Keycloak. `sub` — UUID покупателя (используется для ABAC).
+        `realm_access.roles` должен содержать `customer` (для UC-1).
+
+security:
+  - bearerAuth: []

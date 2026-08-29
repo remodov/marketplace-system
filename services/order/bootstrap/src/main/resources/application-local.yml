@@ -1,0 +1,42 @@
+# Профиль для локального запуска: docker-compose даёт Postgres и Kafka,
+# Catalog/Payment стабятся (см. README). Активируется командой:
+#   ./gradlew :bootstrap:bootRun --args='--spring.profiles.active=local'
+# или через ENV: SPRING_PROFILES_ACTIVE=local
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/orders
+    username: orders
+    password: orders
+  liquibase:
+    contexts: production
+  kafka:
+    bootstrap-servers: localhost:9092
+    listener:
+      auto-startup: false        # включи вручную, если поднял Kafka и стабы топиков
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8081/realms/marketplace/protocol/openid-connect/certs
+
+clients:
+  catalog:
+    base-url: http://localhost:9001
+  payment:
+    base-url: http://localhost:9002
+
+orderservice:
+  outbox:
+    poll-interval-ms: 2000       # медленнее в dev, чтобы не спамить лог
+  expire-unpaid:
+    fixed-delay-ms: 60000
+    timeout-minutes: 15
+  close-delivered:
+    cron: "0 0 4 * * *"
+
+logging:
+  level:
+    ru.vikulinva.orderservice: DEBUG
+    org.springframework.security: INFO
+    liquibase: INFO
