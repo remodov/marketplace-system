@@ -20,7 +20,7 @@ class TemplateRenderer {
     // Regex.replace принимает лямбду, а отсутствующее значение закрывается
     // элвис-оператором. Пустые поля шаблона — обычный случай, не ошибка.
     fun render(template: TemplatesPojo, variables: Map<String, String>): Rendered =
-        Rendered(subject = "", body = "")""
+        Rendered(subject = "", body = "")
 
     private companion object {
         val PLACEHOLDER = Regex("""\$\{([a-zA-Z0-9_]+)}""")
