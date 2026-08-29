@@ -54,4 +54,4 @@ PATCH /products/{id}/stock    {"delta": -3}    списание
 
 - Где валидировать: https://vikulin-va.ru/validation/where-to-validate/
 - Модель ошибок: https://vikulin-va.ru/error-handling/error-model/
-- Ошибки в REST: https://vikulin-va.ru/rest-api/java/errors/
+- Ошибки в REST: https://vikulin-va.ru/rest-api/errors/
