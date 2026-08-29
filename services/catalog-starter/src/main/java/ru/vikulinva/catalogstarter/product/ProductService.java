@@ -46,6 +46,13 @@ public class ProductService {
     }
 
     @Transactional
+    public Product applyDiscount(UUID id, int percent) {
+        Product product = byId(id);
+        product.applyDiscount(percent);
+        return product;
+    }
+
+    @Transactional
     public Product changeStock(UUID id, int delta) {
         Product product = byId(id);
         product.changeStock(delta);

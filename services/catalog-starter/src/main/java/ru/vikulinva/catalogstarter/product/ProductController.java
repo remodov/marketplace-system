@@ -51,6 +51,9 @@ public class ProductController {
     public record ChangeStockRequest(@NotNull Integer delta) {
     }
 
+    public record ApplyDiscountRequest(@NotNull Integer percent) {
+    }
+
     @GetMapping
     public List<ProductView> search(@RequestParam(required = false) String query,
                                     @RequestParam(required = false) BigDecimal maxPrice) {
@@ -72,6 +75,11 @@ public class ProductController {
     @PatchMapping("/{id}/price")
     public ProductView changePrice(@PathVariable UUID id, @Valid @RequestBody ChangePriceRequest request) {
         return ProductView.of(service.changePrice(id, request.price()));
+    }
+
+    @PatchMapping("/{id}/discount")
+    public ProductView applyDiscount(@PathVariable UUID id, @Valid @RequestBody ApplyDiscountRequest request) {
+        return ProductView.of(service.applyDiscount(id, request.percent()));
     }
 
     @PatchMapping("/{id}/stock")

@@ -7,11 +7,14 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.UUID;
 
 @Entity
 @Table(name = "products")
 public class Product {
+
+    public static final int MAX_DISCOUNT_PERCENT = 50;
 
     @Id
     private UUID id;
@@ -59,6 +62,15 @@ public class Product {
             throw new IllegalArgumentException("Цена должна быть больше нуля");
         }
         this.price = newPrice;
+    }
+
+    public void applyDiscount(int percent) {
+        if (percent < 1 || percent > MAX_DISCOUNT_PERCENT) {
+            throw new IllegalArgumentException(
+                "Скидка допустима от 1 до " + MAX_DISCOUNT_PERCENT + " процентов, а не " + percent);
+        }
+        BigDecimal multiplier = BigDecimal.valueOf(100 - percent).divide(BigDecimal.valueOf(100));
+        this.price = price.multiply(multiplier).setScale(2, RoundingMode.HALF_UP);
     }
 
     public void changeStock(int delta) {
