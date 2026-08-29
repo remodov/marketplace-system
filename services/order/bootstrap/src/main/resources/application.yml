@@ -53,6 +53,7 @@ resilience4j:
         wait-duration: 50ms
         retry-exceptions:
           - org.springframework.web.client.ResourceAccessException
+          - org.springframework.web.client.HttpServerErrorException
       payment:
         max-attempts: 3
         wait-duration: 100ms
