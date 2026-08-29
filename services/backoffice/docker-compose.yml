@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: backoffice-postgres
+    environment:
+      POSTGRES_DB: backoffice
+      POSTGRES_USER: backoffice
+      POSTGRES_PASSWORD: backoffice
+    ports:
+      - "5433:5432"
+    volumes:
+      - backoffice-pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U backoffice -d backoffice"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  backoffice-pg-data:

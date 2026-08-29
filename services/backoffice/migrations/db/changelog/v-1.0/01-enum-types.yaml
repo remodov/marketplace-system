@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: v-1.0-create-moderation-reason-enum
+      author: backoffice-team
+      context: production
+      changes:
+        - sql:
+            sql: "CREATE TYPE moderation_reason AS ENUM ('PROHIBITED_GOODS','MISLEADING_TITLE','INVALID_PRICE','OTHER')"
+            rollback: "DROP TYPE moderation_reason"
