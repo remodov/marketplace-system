@@ -17,6 +17,8 @@ hikaricp = "5.1.0"
 
 # Mapping & generation
 mapstruct = "1.6.3"
+lombok = "1.18.34"
+lombok-mapstruct-binding = "0.2.0"
 openapi-generator = "7.10.0"
 
 # Resilience
@@ -64,6 +66,8 @@ hikaricp = { module = "com.zaxxer:HikariCP", version.ref = "hikaricp" }
 # mapping
 mapstruct = { module = "org.mapstruct:mapstruct", version.ref = "mapstruct" }
 mapstruct-processor = { module = "org.mapstruct:mapstruct-processor", version.ref = "mapstruct" }
+lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
+lombok-mapstruct-binding = { module = "org.projectlombok:lombok-mapstruct-binding", version.ref = "lombok-mapstruct-binding" }
 
 # resilience
 resilience4j-spring-boot3 = { module = "io.github.resilience4j:resilience4j-spring-boot3", version.ref = "resilience4j" }

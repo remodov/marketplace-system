@@ -1,4 +1,3 @@
-val lombokVersion: String by rootProject
 val springBootVersion: String by rootProject
 
 dependencies {
@@ -9,10 +8,10 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-jooq:$springBootVersion")
     implementation("org.springframework.kafka:spring-kafka:3.3.1")
 
-    compileOnly("org.projectlombok:lombok:$lombokVersion")
-    annotationProcessor("org.projectlombok:lombok:$lombokVersion")
-    testCompileOnly("org.projectlombok:lombok:$lombokVersion")
-    testAnnotationProcessor("org.projectlombok:lombok:$lombokVersion")
+    compileOnly(libs.lombok)
+    annotationProcessor(libs.lombok)
+    testCompileOnly(libs.lombok)
+    testAnnotationProcessor(libs.lombok)
 
     testImplementation("org.springframework.boot:spring-boot-starter-test:$springBootVersion")
     testImplementation("org.springframework.kafka:spring-kafka-test:3.3.1")

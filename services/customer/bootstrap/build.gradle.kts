@@ -3,7 +3,6 @@ plugins {
     id("io.spring.dependency-management") version "1.1.7"
 }
 
-val lombokVersion: String by rootProject
 val resilience4jVersion: String by rootProject
 val testcontainersVersion: String by rootProject
 val archunitVersion: String by rootProject
@@ -28,10 +27,10 @@ dependencies {
 
     implementation("io.github.resilience4j:resilience4j-spring-boot3:$resilience4jVersion")
 
-    compileOnly("org.projectlombok:lombok:$lombokVersion")
-    annotationProcessor("org.projectlombok:lombok:$lombokVersion")
-    testCompileOnly("org.projectlombok:lombok:$lombokVersion")
-    testAnnotationProcessor("org.projectlombok:lombok:$lombokVersion")
+    compileOnly(libs.lombok)
+    annotationProcessor(libs.lombok)
+    testCompileOnly(libs.lombok)
+    testAnnotationProcessor(libs.lombok)
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-testcontainers")

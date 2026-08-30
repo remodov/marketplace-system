@@ -65,14 +65,14 @@ dependencies {
     liquibaseRuntime("info.picocli:picocli:4.7.6")
     liquibaseRuntime("ch.qos.logback:logback-classic")
 
-    compileOnly("org.projectlombok:lombok:1.18.34")
-    annotationProcessor("org.projectlombok:lombok:1.18.34")
-    testCompileOnly("org.projectlombok:lombok:1.18.34")
-    testAnnotationProcessor("org.projectlombok:lombok:1.18.34")
+    compileOnly(libs.lombok)
+    annotationProcessor(libs.lombok)
+    testCompileOnly(libs.lombok)
+    testAnnotationProcessor(libs.lombok)
 
     implementation("org.mapstruct:mapstruct:1.6.3")
     annotationProcessor("org.mapstruct:mapstruct-processor:1.6.3")
-    annotationProcessor("org.projectlombok:lombok-mapstruct-binding:0.2.0")
+    annotationProcessor(libs.lombok.mapstruct.binding)
 
     // OpenAPI generator кладёт @Generated и @jakarta.annotation.* в сгенерённые stubs.
     implementation("jakarta.annotation:jakarta.annotation-api:3.0.0")
