@@ -1,35 +1,16 @@
 package ru.remodov.backoffice.catalog;
 
-import org.springframework.stereotype.Component;
-import ru.remodov.backoffice.catalog.dto.ProductStatus;
+import org.mapstruct.Mapper;
+import org.mapstruct.ReportingPolicy;
 import ru.remodov.backoffice.catalog.dto.ProductView;
 import ru.remodov.backoffice.catalog.generated.api.model.ProductDto;
 
-@Component
-public class CatalogMapper {
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.ERROR)
+public interface CatalogMapper {
 
-    public ProductView toView(ProductDto dto) {
-        return new ProductView(
-            dto.getId(),
-            dto.getTitle(),
-            dto.getDescription(),
-            dto.getPrice(),
-            dto.getCurrency() != null ? dto.getCurrency().getValue() : null,
-            dto.getSellerId(),
-            toStatus(dto.getStatus()),
-            dto.getCreatedAt(),
-            dto.getUpdatedAt()
-        );
-    }
+    ProductView toView(ProductDto dto);
 
-    private ProductStatus toStatus(ru.remodov.backoffice.catalog.generated.api.model.ProductStatus status) {
-        if (status == null) {
-            return null;
-        }
-        return switch (status) {
-            case DRAFT -> ProductStatus.DRAFT;
-            case PUBLISHED -> ProductStatus.PUBLISHED;
-            case HIDDEN -> ProductStatus.HIDDEN;
-        };
+    default String toCurrencyCode(ProductDto.CurrencyEnum currency) {
+        return currency == null ? null : currency.getValue();
     }
 }

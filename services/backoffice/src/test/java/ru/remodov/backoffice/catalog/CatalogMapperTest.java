@@ -5,6 +5,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mapstruct.factory.Mappers;
 import ru.remodov.backoffice.catalog.dto.ProductStatus;
 import ru.remodov.backoffice.catalog.dto.ProductView;
 import ru.remodov.backoffice.catalog.generated.api.model.ProductDto;
@@ -15,7 +16,6 @@ import java.time.ZoneOffset;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 class CatalogMapperTest {
 
@@ -29,7 +29,7 @@ class CatalogMapperTest {
     private static final OffsetDateTime CREATED_AT = OffsetDateTime.of(2026, 5, 23, 10, 0, 0, 0, ZoneOffset.UTC);
     private static final OffsetDateTime UPDATED_AT = OffsetDateTime.of(2026, 6, 24, 11, 1, 1, 0, ZoneOffset.UTC);
 
-    private final CatalogMapper mapper = new CatalogMapper();
+    private final CatalogMapper mapper = Mappers.getMapper(CatalogMapper.class);
 
     @Test
     @DisplayName("toView переносит все девять полей, не перепутав два соседних момента времени")
@@ -107,9 +107,9 @@ class CatalogMapperTest {
     }
 
     @Test
-    @DisplayName("пустой ответ каталога роняет маппинг NullPointerException — не отдаёт null-view")
-    void nullProductThrows() {
-        assertThatNullPointerException().isThrownBy(() -> mapper.toView(null));
+    @DisplayName("пустой ответ каталога даёт null-view вместо NullPointerException — семантика MapStruct")
+    void nullProductGivesNullView() {
+        assertThat(mapper.toView(null)).isNull();
     }
 
     private static ProductDto fullProduct() {
