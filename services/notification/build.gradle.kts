@@ -49,6 +49,9 @@ dependencies {
     implementation(libs.jackson.jsr310)
     implementation(libs.micrometer.prometheus)
 
+    implementation(libs.mapstruct)
+    annotationProcessor(libs.mapstruct.processor)
+
     // jOOQ codegen — JDBC-драйвер + jOOQ артефакты на этап генерации.
     jooqGenerator(libs.postgresql)
     jooqGenerator("org.jooq:jooq-meta:${libs.versions.jooq.get()}")

@@ -10,6 +10,7 @@ hikaricp = "5.1.0"
 resilience4j = "2.2.0"
 jackson = "2.18.2"
 micrometer = "1.14.2"
+mapstruct = "1.6.3"
 opentelemetry = "1.45.0"
 
 junit-jupiter = "5.11.4"
@@ -19,6 +20,8 @@ testcontainers = "1.20.4"
 wiremock = "3.10.0"
 
 [libraries]
+mapstruct = { module = "org.mapstruct:mapstruct", version.ref = "mapstruct" }
+mapstruct-processor = { module = "org.mapstruct:mapstruct-processor", version.ref = "mapstruct" }
 spring-boot-starter = { module = "org.springframework.boot:spring-boot-starter", version.ref = "spring-boot" }
 spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring-boot" }
 spring-boot-starter-jdbc = { module = "org.springframework.boot:spring-boot-starter-jdbc", version.ref = "spring-boot" }

@@ -4,6 +4,7 @@ import org.assertj.core.api.SoftAssertions;
 import org.jooq.JSONB;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mapstruct.factory.Mappers;
 import ru.vikulinva.notificationservice.generated.enums.DeliveryAttemptResult;
 import ru.vikulinva.notificationservice.generated.enums.NotificationChannel;
 import ru.vikulinva.notificationservice.generated.enums.NotificationStatus;
@@ -16,7 +17,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 class RestMapperTest {
 
@@ -44,7 +44,7 @@ class RestMapperTest {
     private static final String FIRST_RESPONSE_SNIPPET = "503 Service Unavailable";
     private static final String SECOND_RESPONSE_SNIPPET = "250 Message accepted";
 
-    private final RestMapper mapper = new RestMapper();
+    private final RestMapper mapper = Mappers.getMapper(RestMapper.class);
 
     @Test
     @DisplayName("toSummary переносит все девять полей, не перепутав три соседних момента времени")
@@ -124,23 +124,25 @@ class RestMapperTest {
     }
 
     @Test
-    @DisplayName("попытка без result роняет маппинг NullPointerException — не подставляет null")
-    void attemptWithoutResultThrows() {
+    @DisplayName("попытка без result даёт null вместо NullPointerException — семантика MapStruct")
+    void attemptWithoutResultGivesNull() {
         DeliveryAttemptsPojo attempt = firstAttempt();
         attempt.setResult(null);
 
-        assertThatNullPointerException()
-            .isThrownBy(() -> mapper.toDetail(fullNotification(), List.of(attempt)));
+        NotificationDetailDto detail = mapper.toDetail(fullNotification(), List.of(attempt));
+
+        assertThat(detail.attempts().get(0).result()).isNull();
     }
 
     @Test
-    @DisplayName("попытка без attemptNumber роняет маппинг NullPointerException — не подставляет ноль")
-    void attemptWithoutAttemptNumberThrows() {
+    @DisplayName("попытка без attemptNumber даёт ноль вместо NullPointerException — семантика MapStruct")
+    void attemptWithoutAttemptNumberGivesZero() {
         DeliveryAttemptsPojo attempt = firstAttempt();
         attempt.setAttemptNumber(null);
 
-        assertThatNullPointerException()
-            .isThrownBy(() -> mapper.toDetail(fullNotification(), List.of(attempt)));
+        NotificationDetailDto detail = mapper.toDetail(fullNotification(), List.of(attempt));
+
+        assertThat(detail.attempts().get(0).attemptNumber()).isZero();
     }
 
     private static void assertEverySummaryField(SoftAssertions each, NotificationSummaryDto summary) {
