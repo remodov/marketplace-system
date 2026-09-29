@@ -58,31 +58,13 @@ public class RagAssistant {
     public record Answer(String text, List<String> sources, boolean grounded) {
     }
 
+    // TODO Б3: ответить по документам.
+    // Порядок такой: найти в базе похожие куски (TOP_K и MIN_SCORE уже подобраны),
+    // ничего не нашли — вернуть честный отказ и НЕ ходить к модели, нашли —
+    // собрать подсказку PROMPT из найденного и вопроса, спросить модель и
+    // вернуть ответ вместе с источниками. Провайдера может не быть и он может
+    // упасть — в обоих случаях у нас на руках остаётся найденный фрагмент.
     public Answer ask(String question) {
-        List<KnowledgeBase.Match> found = base.search(question, TOP_K, MIN_SCORE);
-        if (found.isEmpty()) {
-            return new Answer("Не нашёл ответа в документах магазина. "
-                + "Спросите оператора — он посмотрит вручную.", List.of(), false);
-        }
-
-        List<String> sources = found.stream().map(m -> m.chunk().source()).distinct().toList();
-        String context = found.stream()
-            .map(m -> "- " + m.chunk().text())
-            .reduce((a, b) -> a + "\n" + b)
-            .orElse("");
-
-        LlmClient client = llm.getIfAvailable();
-        if (client == null) {
-            /* Без провайдера отдаём найденное как есть. Половина пользы RAG —
-               именно в поиске: человек видит нужный абзац, даже когда сформулировать
-               ответ некому. */
-            return new Answer(found.get(0).chunk().text(), sources, true);
-        }
-        try {
-            return new Answer(client.complete(PROMPT.formatted(context, question)).strip(), sources, true);
-        } catch (RuntimeException e) {
-            log.warn("Модель недоступна, отдаём найденный фрагмент: {}", e.toString());
-            return new Answer(found.get(0).chunk().text(), sources, true);
-        }
+        return new Answer("", List.of(), false);
     }
 }

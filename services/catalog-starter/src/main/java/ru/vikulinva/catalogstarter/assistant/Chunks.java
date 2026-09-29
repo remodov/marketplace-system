@@ -27,6 +27,11 @@ public final class Chunks {
      * @param maxChars  потолок длины куска
      * @param overlap   сколько символов хвоста повторить в следующем куске
      */
+    // TODO Б3: порезать документ на куски.
+    // Два требования: ни один кусок не длиннее maxChars и соседние куски
+    // перекрываются хвостом предыдущего на overlap символов. Резать по границам
+    // предложений, слова не рвать. Отдельный случай — предложение длиннее
+    // потолка: выбрасывать его нельзя, режется по словам.
     public static List<String> split(String text, int maxChars, int overlap) {
         if (maxChars <= 0) {
             throw new IllegalArgumentException("размер куска должен быть больше нуля");
@@ -35,42 +40,7 @@ public final class Chunks {
             throw new IllegalArgumentException("перекрытие должно быть меньше размера куска");
         }
         String clean = text == null ? "" : text.strip().replaceAll("\\s+", " ");
-        if (clean.isEmpty()) {
-            return List.of();
-        }
-
-        List<String> sentences = sentences(clean);
-        List<String> chunks = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
-
-        for (String sentence : sentences) {
-            if (!current.isEmpty() && current.length() + 1 + sentence.length() > maxChars) {
-                chunks.add(current.toString());
-                /* Перекрытие берём только в тот запас, что остался под само
-                   предложение: иначе хвост предыдущего куска вместе с длинным
-                   предложением снова вылезет за потолок. */
-                int room = maxChars - sentence.length() - 1;
-                current = new StringBuilder(room <= 0 ? "" : tail(current.toString(), Math.min(overlap, room)));
-            }
-            /* Одно предложение длиннее потолка — режем по словам: иначе кусок
-               вырастет за лимит и подсказка перестанет влезать в окно. */
-            while (sentence.length() > maxChars) {
-                int cut = sentence.lastIndexOf(' ', maxChars);
-                if (cut <= 0) {
-                    cut = maxChars;
-                }
-                chunks.add(sentence.substring(0, cut).strip());
-                sentence = tail(sentence.substring(0, cut), overlap) + sentence.substring(cut);
-            }
-            if (!current.isEmpty()) {
-                current.append(' ');
-            }
-            current.append(sentence);
-        }
-        if (!current.isEmpty()) {
-            chunks.add(current.toString());
-        }
-        return chunks.stream().map(String::strip).filter(s -> !s.isBlank()).toList();
+        return clean.isEmpty() ? List.of() : List.of(clean);
     }
 
     private static List<String> sentences(String text) {
