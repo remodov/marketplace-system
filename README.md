@@ -107,6 +107,11 @@ Kafka, Redis, MongoDB, Elasticsearch, MinIO и Keycloak. Что это за ин
 | Б3 | помощник, отвечающий по документам магазина (RAG) | `side-b3-rag-assistant` | [RAG и эмбеддинги](https://vikulin-va.ru/product-engineer/rag-and-embeddings/) · [Векторные базы](https://vikulin-va.ru/product-engineer/vector-databases/) |
 | Б4 | агент с инструментами поверх каталога | `side-b4-agent-tools` | [Вызов инструментов](https://vikulin-va.ru/product-engineer/tool-calling/) · [Агенты и инструменты](https://vikulin-va.ru/product-engineer/agents-and-tools/) |
 
+Боковые шаги Б3 и Б4 есть не только на Java: те же два урока — помощник по
+документам и агент с инструментами — лежат на Python, Go и Node в
+[examples/llm](examples/llm). Ни ключа, ни зависимостей: векторы считаются
+локально, тесты идут без провайдера.
+
 Шаги 1–6 идут по `services/catalog-starter`, дальше — по настоящим сервисам:
 каталог, заказ, платежи, BFF, веб-клиент и выкат. Все шаги готовы; чем
 проверяется каждый — написано в его `TASK.md`.

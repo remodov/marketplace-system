@@ -1,0 +1,11 @@
+{
+  "name": "llm-example",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Помощник по документам магазина и агент с инструментами: те же два урока, что в Java-версии практикума",
+  "scripts": {
+    "test": "node --test",
+    "scores": "node scores.mjs"
+  }
+}
