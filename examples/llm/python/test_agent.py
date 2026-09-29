@@ -34,7 +34,7 @@ def call(tool, **args):
 class AgentTest(unittest.TestCase):
 
     def setUp(self):
-        self.products = [dict(p) for p in shop.PRODUCTS]
+        self.products = shop.products()
         self.tools = agent.ToolRegistry(catalog_tools.build(self.products))
         self.llm = ScriptedLlm()
         self.agent = agent.AgentLoop(self.tools, self.llm)

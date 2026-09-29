@@ -1,0 +1,94 @@
+"""Поиск по каталогу фразой: модель превращает запрос в фильтры.
+
+Покупатель пишет не «мышь», а «недорогая беспроводная мышь в наличии». Обычный
+поиск по названию на такой фразе не найдёт ничего: слов «недорогая» и «в
+наличии» в названиях нет. Модель разбирает фразу в фильтры — что искать по
+названию, какой потолок цены, нужен ли товар в наличии.
+
+Три вещи обязательны, без них это нельзя выпускать:
+
+1. Кэш. Одна и та же фраза повторяется чаще, чем кажется, а каждый поход к
+   модели стоит денег и сотен миллисекунд.
+2. Работа без модели. Провайдер лежит, ключ протух, лимит исчерпан — поиск
+   обязан продолжать работать как обычный текстовый. Пустая выдача с ошибкой —
+   худшее, что можно показать покупателю.
+3. Оборонительный разбор ответа. Модель отвечает текстом, а не типом. Она
+   вернёт не JSON, добавит «конечно, вот ваш ответ», придумает лишнее поле — и
+   сделает это в самый неудобный момент.
+"""
+import json
+from dataclasses import dataclass
+
+PROMPT = """Разбери запрос покупателя интернет-магазина в JSON без пояснений.
+Поля: text — что искать по названию, maxPrice — потолок цены в рублях или null,
+inStockOnly — true, если покупателю нужен товар в наличии.
+Запрос: {query}
+"""
+
+
+@dataclass(frozen=True)
+class SearchFilters:
+    """Во что превращается фраза: текст для поиска по названию и, если из фразы
+    это следует, потолок цены и требование наличия."""
+    text: str
+    max_price: float = None
+    in_stock_only: bool = False
+
+    @staticmethod
+    def plain(query):
+        return SearchFilters(query, None, False)
+
+
+class QueryUnderstanding:
+
+    def __init__(self, llm=None):
+        """llm — функция «подсказка → ответ» или None, если провайдера нет."""
+        self._llm = llm
+        # Кэш здесь самый простой, какой бывает. В настоящем сервисе у него
+        # обязаны быть срок жизни и потолок размера: словарь растёт, пока не
+        # кончится память, а ответ модели на вчерашний ассортимент устаревает.
+        self._cache = {}
+
+    def understand(self, query):
+        if query in self._cache:
+            return self._cache[query]
+
+        filters = self._ask(query)
+        self._cache[query] = filters
+        return filters
+
+    def _ask(self, query):
+        if self._llm is None:
+            return SearchFilters.plain(query)
+        try:
+            return self._parse(self._llm(PROMPT.format(query=query)), query)
+        except Exception:
+            # Провайдер недоступен — ищем как есть. Ошибку покупателю не
+            # показываем: он спрашивал про мышь, а не про наш провайдер.
+            return SearchFilters.plain(query)
+
+    def _parse(self, answer, original):
+        """Обещание модели — не гарантия: она отвечает текстом, а не типом."""
+        try:
+            data = json.loads(answer.strip())
+            if not isinstance(data, dict):
+                return SearchFilters.plain(original)
+            text = data.get("text") or original
+            price = data.get("maxPrice")
+            return SearchFilters(str(text).strip() or original,
+                                 float(price) if isinstance(price, (int, float)) else None,
+                                 bool(data.get("inStockOnly")))
+        except Exception:
+            return SearchFilters.plain(original)
+
+
+def search(products, filters):
+    """Фильтры применяются к каталогу обычным перебором — модель тут больше не
+    участвует, и это важно: она разбирает запрос, а не ищет."""
+    text = (filters.text or "").strip().lower()
+    found = [p for p in products if not text or text in p["title"].lower()]
+    if filters.max_price is not None:
+        found = [p for p in found if p["price"] <= filters.max_price]
+    if filters.in_stock_only:
+        found = [p for p in found if p["available"] > 0]
+    return found
