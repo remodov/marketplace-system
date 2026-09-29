@@ -77,63 +77,21 @@ public class AgentLoop {
     /**
      * @param confirmed человек уже разрешил изменяющие вызовы в этом прогоне
      */
+    // TODO Б4: цикл агента.
+    // Шаг цикла: спросить модель подсказкой PROMPT (каталог инструментов, задача
+    // и накопленные наблюдения), разобрать ответ, сделать одно из четырёх.
+    //   {"answer": "..."}      — вернуть ответ покупателю;
+    //   {"tool": "имя", ...}   — найти инструмент в реестре и выполнить, результат
+    //                            дописать в наблюдения и пойти на следующий шаг;
+    //   инструмента нет        — сказать об этом наблюдением, не падать;
+    //   ответ не JSON          — попросить повторить, не гадать.
+    // Изменяющий инструмент (tool.mutating()) без confirmed НЕ выполняется:
+    // цикл останавливается и возвращает вызов в awaitingConfirm.
+    // Шагов не больше MAX_STEPS, и на исходе — честный отказ, а не последний
+    // ответ модели: к этому моменту она уже ходит по кругу.
+    // Каждый шаг дописывать в trace: без него разбирать поведение агента нечем.
     public Result run(String task, boolean confirmed) {
-        LlmClient client = llm.getIfAvailable();
-        if (client == null) {
-            return new Result("Агент недоступен: не настроен провайдер модели.", List.of(), null);
-        }
-
-        List<String> trace = new ArrayList<>();
-        StringBuilder observations = new StringBuilder();
-
-        for (int step = 1; step <= MAX_STEPS; step++) {
-            String raw;
-            try {
-                raw = client.complete(PROMPT.formatted(tools.catalogue(), task, observations));
-            } catch (RuntimeException e) {
-                log.warn("Модель недоступна на шаге {}: {}", step, e.toString());
-                return new Result("Модель недоступна, попробуйте позже.", List.copyOf(trace), null);
-            }
-
-            JsonNode decision = parse(raw);
-            if (decision == null) {
-                /* Модель ответила не JSON. Не падаем и не гадаем — говорим ей об
-                   этом наблюдением: следующий заход обычно получается. */
-                trace.add("шаг " + step + ": ответ не разобран, просим повторить");
-                observations.append("\nОтвет не разобран. Верни один JSON-объект.");
-                continue;
-            }
-
-            if (decision.hasNonNull("answer")) {
-                trace.add("шаг " + step + ": ответ готов");
-                return new Result(decision.get("answer").asText(), List.copyOf(trace), null);
-            }
-
-            String name = decision.path("tool").asText("");
-            Tool tool = tools.find(name).orElse(null);
-            if (tool == null) {
-                trace.add("шаг " + step + ": инструмента «" + name + "» нет");
-                observations.append("\nИнструмента «").append(name)
-                    .append("» не существует. Доступны только перечисленные выше.");
-                continue;
-            }
-
-            if (tool.mutating() && !confirmed) {
-                String call = name + " " + decision.path("args");
-                trace.add("шаг " + step + ": нужен человек — " + call);
-                return new Result("Нужно подтверждение: агент хочет выполнить " + call,
-                    List.copyOf(trace), call);
-            }
-
-            String observation = tool.run(decision.path("args"));
-            trace.add("шаг " + step + ": " + name + " → " + observation.replace('\n', ';'));
-            observations.append("\nРезультат ").append(name).append(": ").append(observation);
-        }
-
-        /* Шаги кончились. Честный отказ лучше последнего ответа модели: она
-           к этому моменту уже ходит по кругу, и её «ответ» ничем не обоснован. */
-        return new Result("Не уложился в " + MAX_STEPS + " шагов. Передаю оператору.",
-            List.copyOf(trace), null);
+        return new Result("", List.of(), null);
     }
 
     private JsonNode parse(String answer) {
