@@ -76,7 +76,7 @@ Kafka, Redis, MongoDB, Elasticsearch, MinIO и Keycloak. Что это за ин
 
 ## Практикум
 
-Пятнадцать шагов и два боковых — от «поднять систему» до наблюдаемости и доставки,
+Пятнадцать шагов и четыре боковых — от «поднять систему» до наблюдаемости и доставки,
 с покрытием всех фаз программы
 [«Backend · Java»](https://vikulin-va.ru/programs/backend-java/).
 План целиком: [docs/practicum/PLAN.md](docs/practicum/PLAN.md).
@@ -104,6 +104,8 @@ Kafka, Redis, MongoDB, Elasticsearch, MinIO и Keycloak. Что это за ин
 | 15 | образ, манифесты, пайплайн, наблюдаемость | `step-15-delivery-and-observability` | [Docker](https://vikulin-va.ru/docker/) · [Kubernetes](https://vikulin-va.ru/kubernetes/) · [Наблюдаемость](https://vikulin-va.ru/observability/) |
 | Б1 | Notification на Kotlin | `side-b1-kotlin-notification` | [Kotlin](https://vikulin-va.ru/kotlin/) |
 | Б2 | поиск по каталогу на естественном языке | `side-b2-llm-search` | [Продукт-инженер](https://vikulin-va.ru/product-engineer/) |
+| Б3 | помощник, отвечающий по документам магазина (RAG) | `side-b3-rag-assistant` | [RAG и эмбеддинги](https://vikulin-va.ru/product-engineer/rag-and-embeddings/) · [Векторные базы](https://vikulin-va.ru/product-engineer/vector-databases/) |
+| Б4 | агент с инструментами поверх каталога | `side-b4-agent-tools` | [Вызов инструментов](https://vikulin-va.ru/product-engineer/tool-calling/) · [Агенты и инструменты](https://vikulin-va.ru/product-engineer/agents-and-tools/) |
 
 Шаги 1–6 идут по `services/catalog-starter`, дальше — по настоящим сервисам:
 каталог, заказ, платежи, BFF, веб-клиент и выкат. Все шаги готовы; чем
