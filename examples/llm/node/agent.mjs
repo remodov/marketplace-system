@@ -61,58 +61,20 @@ export class AgentLoop {
 
   /** confirmed — человек уже разрешил изменяющие вызовы в этом прогоне. */
   async run(task, confirmed = false) {
-    if (!this.#llm) {
-      return { text: 'Агент недоступен: не настроен провайдер модели.', trace: [], awaitingConfirm: null }
-    }
-
-    const trace = []
-    let observations = ''
-
-    for (let step = 1; step <= MAX_STEPS; step++) {
-      let raw
-      try {
-        raw = await this.#llm(PROMPT(this.#tools.catalogue(), task, observations))
-      } catch {
-        return { text: 'Модель недоступна, попробуйте позже.', trace, awaitingConfirm: null }
-      }
-
-      const decision = parse(raw)
-      if (!decision) {
-        /* Модель ответила не JSON. Не падаем и не гадаем — говорим ей об этом
-           наблюдением: следующий заход обычно получается. */
-        trace.push(`шаг ${step}: ответ не разобран, просим повторить`)
-        observations += '\nОтвет не разобран. Верни один JSON-объект.'
-        continue
-      }
-
-      if (decision.answer != null) {
-        trace.push(`шаг ${step}: ответ готов`)
-        return { text: String(decision.answer), trace, awaitingConfirm: null }
-      }
-
-      const name = decision.tool ?? ''
-      const tool = this.#tools.find(name)
-      if (!tool) {
-        trace.push(`шаг ${step}: инструмента «${name}» нет`)
-        observations += `\nИнструмента «${name}» не существует. Доступны только перечисленные выше.`
-        continue
-      }
-
-      const args = decision.args ?? {}
-      if (tool.mutating && !confirmed) {
-        const call = `${name} ${JSON.stringify(args)}`
-        trace.push(`шаг ${step}: нужен человек — ${call}`)
-        return { text: `Нужно подтверждение: агент хочет выполнить ${call}`, trace, awaitingConfirm: call }
-      }
-
-      const observation = await tool.run(args)
-      trace.push(`шаг ${step}: ${name} → ${observation.replaceAll('\n', ';')}`)
-      observations += `\nРезультат ${name}: ${observation}`
-    }
-
-    /* Шаги кончились. Честный отказ лучше последнего ответа модели: она к этому
-       моменту уже ходит по кругу, и её «ответ» ничем не обоснован. */
-    return { text: `Не уложился в ${MAX_STEPS} шагов. Передаю оператору.`, trace, awaitingConfirm: null }
+    // TODO Б4: цикл агента.
+    // Шаг цикла: спросить модель подсказкой PROMPT (каталог инструментов, задача
+    // и накопленные наблюдения), разобрать ответ через parse, сделать одно из четырёх.
+    //   {"answer": "..."}      вернуть ответ покупателю;
+    //   {"tool": "имя", ...}   найти инструмент в реестре и выполнить, результат
+    //                          дописать в наблюдения и пойти на следующий шаг;
+    //   инструмента нет        сказать об этом наблюдением, не падать;
+    //   ответ не JSON          попросить повторить, не гадать.
+    // Изменяющий инструмент (tool.mutating) без confirmed не выполняется:
+    // цикл останавливается и возвращает вызов в awaitingConfirm.
+    // Шагов не больше MAX_STEPS, и на исходе честный отказ, а не последний
+    // ответ модели: к этому моменту она уже ходит по кругу.
+    // Каждый шаг дописывать в trace: без него разбирать поведение агента нечем.
+    return { text: '', trace: [], awaitingConfirm: null }
   }
 }
 
