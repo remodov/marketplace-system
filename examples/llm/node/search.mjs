@@ -38,38 +38,20 @@ export class QueryUnderstanding {
   }
 
   async understand(query) {
-    if (this.#cache.has(query)) return this.#cache.get(query)
-
-    const filters = await this.#ask(query)
-    this.#cache.set(query, filters)
-    return filters
-  }
-
-  async #ask(query) {
-    if (!this.#llm) return plainFilters(query)
-    try {
-      return parseFilters(await this.#llm(PROMPT(query)), query)
-    } catch {
-      /* Ошибку покупателю не показываем: он спрашивал про мышь, а не про наш
-         провайдер. */
-      return plainFilters(query)
-    }
+    // TODO Б2: превратить фразу в фильтры.
+    // Три вещи обязательны, иначе это нельзя выпускать: одна и та же фраза не
+    // должна ходить к модели дважды; лежащий провайдер не должен ломать поиск;
+    // ответ модели разбирается оборонительно, она вернёт не то, что обещала,
+    // ровно тогда, когда этого не ждут.
+    return plainFilters(query)
   }
 }
 
 /** Обещание модели — не гарантия: она отвечает текстом, а не типом. */
 export function parseFilters(answer, original) {
-  let data
-  try {
-    data = JSON.parse(String(answer).trim())
-  } catch {
-    return plainFilters(original)
-  }
-  if (!data || typeof data !== 'object' || Array.isArray(data)) return plainFilters(original)
-
-  const text = typeof data.text === 'string' && data.text.trim() ? data.text.trim() : original
-  const maxPrice = typeof data.maxPrice === 'number' ? data.maxPrice : null
-  return { text, maxPrice, inStockOnly: data.inStockOnly === true }
+  // TODO Б2: разбор ответа модели. Поля описаны в подсказке, но обещание
+  // модели не гарантия: она отвечает текстом, а не типом.
+  return plainFilters(original)
 }
 
 /** Фильтры применяются к каталогу обычным перебором — модель тут больше не
