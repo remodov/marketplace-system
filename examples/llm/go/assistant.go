@@ -1,10 +1,5 @@
 package llm
 
-import (
-	"fmt"
-	"strings"
-)
-
 // TopK — сколько кусков кладём в подсказку. Больше — дороже и хуже: лишние куски
 // разбавляют нужный и уводят ответ в сторону.
 const TopK = 3
@@ -57,32 +52,8 @@ func NewRagAssistant(base *KnowledgeBase, llm Complete) *RagAssistant {
 }
 
 func (a *RagAssistant) Ask(question string) Answer {
-	found := a.base.Search(question, TopK, MinScore)
-	if len(found) == 0 {
-		return Answer{Text: "Не нашёл ответа в документах магазина. " +
-			"Спросите оператора — он посмотрит вручную."}
-	}
-
-	var sources []string
-	seen := map[string]bool{}
-	var context strings.Builder
-	for _, m := range found {
-		if !seen[m.Chunk.Source] {
-			seen[m.Chunk.Source] = true
-			sources = append(sources, m.Chunk.Source)
-		}
-		context.WriteString("- " + m.Chunk.Text + "\n")
-	}
-
-	if a.llm == nil {
-		// Без провайдера отдаём найденное как есть. Половина пользы RAG — именно
-		// в поиске: человек видит нужный абзац, даже когда сформулировать ответ
-		// некому.
-		return Answer{Text: found[0].Chunk.Text, Sources: sources, Grounded: true}
-	}
-	text, err := a.llm(fmt.Sprintf(ragPrompt, strings.TrimRight(context.String(), "\n"), question))
-	if err != nil {
-		return Answer{Text: found[0].Chunk.Text, Sources: sources, Grounded: true}
-	}
-	return Answer{Text: strings.TrimSpace(text), Sources: sources, Grounded: true}
+	// TODO Б3: поиск похожих кусков, подсказка из найденного, честный отказ.
+	// Ничего не нашли: отвечаем «не знаю» и к модели не идём. Без провайдера
+	// отдаём найденный фрагмент как есть. Ответ всегда с источниками.
+	return Answer{}
 }

@@ -31,52 +31,14 @@ func Split(text string, maxChars, overlap int) []string {
 		panic("перекрытие должно быть меньше размера куска")
 	}
 
+	// TODO Б3: нарезка по границам предложений с перекрытием.
+	// Один кусок не длиннее maxChars, слова не рвутся, хвост предыдущего куска
+	// повторяется в начале следующего, предложение длиннее потолка режется по словам.
 	clean := strings.TrimSpace(spaces.ReplaceAllString(text, " "))
 	if clean == "" {
 		return nil
 	}
-
-	var chunks []string
-	current := ""
-	for _, sentence := range sentences(clean) {
-		if current != "" && length(current)+1+length(sentence) > maxChars {
-			chunks = append(chunks, current)
-			// Перекрытие берём только в тот запас, что остался под само
-			// предложение: иначе хвост вместе с длинным предложением снова
-			// вылезет за потолок.
-			room := maxChars - length(sentence) - 1
-			if room > 0 {
-				current = tail(current, min(overlap, room))
-			} else {
-				current = ""
-			}
-		}
-
-		// Одно предложение длиннее потолка — режем по словам: выбрасывать его
-		// нельзя, а оставить целым не даёт окно модели.
-		for length(sentence) > maxChars {
-			cut := cutAtWord(sentence, maxChars)
-			chunks = append(chunks, strings.TrimSpace(slice(sentence, 0, cut)))
-			sentence = tail(slice(sentence, 0, cut), overlap) + slice(sentence, cut, length(sentence))
-		}
-
-		if current == "" {
-			current = sentence
-		} else {
-			current = current + " " + sentence
-		}
-	}
-	if current != "" {
-		chunks = append(chunks, current)
-	}
-
-	var out []string
-	for _, c := range chunks {
-		if t := strings.TrimSpace(c); t != "" {
-			out = append(out, t)
-		}
-	}
-	return out
+	return []string{clean}
 }
 
 func sentences(text string) []string {
