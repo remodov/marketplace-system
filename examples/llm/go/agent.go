@@ -2,7 +2,6 @@ package llm
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 )
 
@@ -98,61 +97,21 @@ func NewAgentLoop(tools *ToolRegistry, llm Complete) *AgentLoop {
 // Run выполняет задачу. confirmed означает, что человек уже разрешил изменяющие
 // вызовы в этом прогоне.
 func (a *AgentLoop) Run(task string, confirmed bool) Result {
-	if a.llm == nil {
-		return Result{Text: "Агент недоступен: не настроен провайдер модели."}
-	}
-
-	var trace []string
-	var observations strings.Builder
-
-	for step := 1; step <= MaxSteps; step++ {
-		raw, err := a.llm(fmt.Sprintf(agentPrompt, a.tools.Catalogue(), task, observations.String()))
-		if err != nil {
-			return Result{Text: "Модель недоступна, попробуйте позже.", Trace: trace}
-		}
-
-		decision, ok := parseDecision(raw)
-		if !ok {
-			// Модель ответила не JSON. Не падаем и не гадаем — говорим ей об этом
-			// наблюдением: следующий заход обычно получается.
-			trace = append(trace, fmt.Sprintf("шаг %d: ответ не разобран, просим повторить", step))
-			observations.WriteString("\nОтвет не разобран. Верни один JSON-объект.")
-			continue
-		}
-
-		if answer, has := decision["answer"]; has && answer != nil {
-			trace = append(trace, fmt.Sprintf("шаг %d: ответ готов", step))
-			return Result{Text: fmt.Sprint(answer), Trace: trace}
-		}
-
-		name, _ := decision["tool"].(string)
-		tool, found := a.tools.Find(name)
-		if !found {
-			trace = append(trace, fmt.Sprintf("шаг %d: инструмента «%s» нет", step, name))
-			observations.WriteString("\nИнструмента «" + name +
-				"» не существует. Доступны только перечисленные выше.")
-			continue
-		}
-
-		args, _ := decision["args"].(map[string]any)
-		if tool.Mutating && !confirmed {
-			encoded, _ := json.Marshal(args)
-			call := name + " " + string(encoded)
-			trace = append(trace, fmt.Sprintf("шаг %d: нужен человек — %s", step, call))
-			return Result{Text: "Нужно подтверждение: агент хочет выполнить " + call,
-				Trace: trace, AwaitingConfirm: call}
-		}
-
-		observation := tool.Run(args)
-		trace = append(trace, fmt.Sprintf("шаг %d: %s → %s", step, name,
-			strings.ReplaceAll(observation, "\n", ";")))
-		observations.WriteString("\nРезультат " + name + ": " + observation)
-	}
-
-	// Шаги кончились. Честный отказ лучше последнего ответа модели: она к этому
-	// моменту уже ходит по кругу, и её «ответ» ничем не обоснован.
-	return Result{Text: fmt.Sprintf("Не уложился в %d шагов. Передаю оператору.", MaxSteps),
-		Trace: trace}
+	// TODO Б4: цикл агента.
+	// Шаг цикла: спросить модель подсказкой agentPrompt (каталог инструментов,
+	// задача и накопленные наблюдения), разобрать ответ через parseDecision,
+	// сделать одно из четырёх.
+	//   {"answer": "..."}      вернуть ответ покупателю;
+	//   {"tool": "имя", ...}   найти инструмент в реестре и выполнить, результат
+	//                          дописать в наблюдения и пойти на следующий шаг;
+	//   инструмента нет        сказать об этом наблюдением, не падать;
+	//   ответ не JSON          попросить повторить, не гадать.
+	// Изменяющий инструмент (tool.Mutating) без confirmed не выполняется:
+	// цикл останавливается и возвращает вызов в AwaitingConfirm.
+	// Шагов не больше MaxSteps, и на исходе честный отказ, а не последний
+	// ответ модели: к этому моменту она уже ходит по кругу.
+	// Каждый шаг дописывать в Trace: без него разбирать поведение агента нечем.
+	return Result{}
 }
 
 func parseDecision(answer string) (map[string]any, bool) {
