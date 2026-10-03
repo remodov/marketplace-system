@@ -1,10 +1,6 @@
 package llm
 
-import (
-	"encoding/json"
-	"fmt"
-	"strings"
-)
+import "strings"
 
 // searchPrompt — промпт тоже код: его меняют, и поведение поиска меняется вместе
 // с ним. Значит, и проверять его надо как код.
@@ -50,53 +46,18 @@ func NewQueryUnderstanding(llm Complete) *QueryUnderstanding {
 }
 
 func (q *QueryUnderstanding) Understand(query string) SearchFilters {
-	if cached, ok := q.cache[query]; ok {
-		return cached
-	}
-	filters := q.ask(query)
-	// Кэш здесь самый простой, какой бывает. В настоящем сервисе у него обязаны
-	// быть срок жизни и потолок размера: карта растёт, пока не кончится память,
-	// а ответ модели на вчерашний ассортимент устаревает.
-	q.cache[query] = filters
-	return filters
+	// TODO Б2: превратить фразу в фильтры.
+	// Три вещи обязательны, иначе это нельзя выпускать: одна и та же фраза не
+	// должна ходить к модели дважды; лежащий провайдер не должен ломать поиск;
+	// ответ модели разбирается оборонительно, она вернёт не то, что обещала,
+	// ровно тогда, когда этого не ждут.
+	return PlainFilters(query)
 }
 
-func (q *QueryUnderstanding) ask(query string) SearchFilters {
-	if q.llm == nil {
-		return PlainFilters(query)
-	}
-	answer, err := q.llm(fmt.Sprintf(searchPrompt, query))
-	if err != nil {
-		// Ошибку покупателю не показываем: он спрашивал про мышь, а не про наш
-		// провайдер.
-		return PlainFilters(query)
-	}
-	return parseFilters(answer, query)
-}
-
-// parseFilters — обещание модели не гарантия: она отвечает текстом, а не типом.
 func parseFilters(answer, original string) SearchFilters {
-	var raw struct {
-		Text        *string  `json:"text"`
-		MaxPrice    *float64 `json:"maxPrice"`
-		InStockOnly *bool    `json:"inStockOnly"`
-	}
-	if err := json.Unmarshal([]byte(strings.TrimSpace(answer)), &raw); err != nil {
-		return PlainFilters(original)
-	}
-
-	filters := SearchFilters{Text: original}
-	if raw.Text != nil && strings.TrimSpace(*raw.Text) != "" {
-		filters.Text = strings.TrimSpace(*raw.Text)
-	}
-	if raw.MaxPrice != nil {
-		filters.MaxPrice = int(*raw.MaxPrice)
-		filters.HasMaxPrice = true
-	}
-	if raw.InStockOnly != nil {
-		filters.InStockOnly = *raw.InStockOnly
-	}
-	return filters
+	// TODO Б2: разбор ответа модели. Поля описаны в подсказке, но обещание
+	// модели не гарантия: она отвечает текстом, а не типом.
+	return PlainFilters(original)
 }
 
 // SearchCatalog применяет фильтры обычным перебором — модель тут больше не
