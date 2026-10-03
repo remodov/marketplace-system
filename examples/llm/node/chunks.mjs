@@ -15,35 +15,11 @@ export function split(text, maxChars, overlap) {
   if (maxChars <= 0) throw new Error('размер куска должен быть больше нуля')
   if (overlap < 0 || overlap >= maxChars) throw new Error('перекрытие должно быть меньше размера куска')
 
+  // TODO Б3: нарезка по границам предложений с перекрытием.
+  // Один кусок не длиннее maxChars, слова не рвутся, хвост предыдущего куска
+  // повторяется в начале следующего, предложение длиннее потолка режется по словам.
   const clean = (text ?? '').trim().replace(/\s+/g, ' ')
-  if (!clean) return []
-
-  const chunks = []
-  let current = ''
-
-  for (let sentence of sentences(clean)) {
-    if (current && current.length + 1 + sentence.length > maxChars) {
-      chunks.push(current)
-      /* Перекрытие берём только в тот запас, что остался под само предложение:
-         иначе хвост вместе с длинным предложением снова вылезет за потолок. */
-      const room = maxChars - sentence.length - 1
-      current = room > 0 ? tail(current, Math.min(overlap, room)) : ''
-    }
-
-    /* Одно предложение длиннее потолка — режем по словам: выбрасывать его
-       нельзя, а оставить целым не даёт окно модели. */
-    while (sentence.length > maxChars) {
-      let cut = sentence.lastIndexOf(' ', maxChars)
-      if (cut <= 0) cut = maxChars
-      chunks.push(sentence.slice(0, cut).trim())
-      sentence = tail(sentence.slice(0, cut), overlap) + sentence.slice(cut)
-    }
-
-    current = current ? `${current} ${sentence}` : sentence
-  }
-
-  if (current) chunks.push(current)
-  return chunks.map(c => c.trim()).filter(Boolean)
+  return clean ? [clean] : []
 }
 
 function sentences(text) {

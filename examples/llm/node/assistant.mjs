@@ -40,29 +40,9 @@ export class RagAssistant {
   }
 
   async ask(question) {
-    const found = this.#base.search(question, TOP_K, MIN_SCORE)
-    if (found.length === 0) {
-      return {
-        text: 'Не нашёл ответа в документах магазина. Спросите оператора — он посмотрит вручную.',
-        sources: [],
-        grounded: false,
-      }
-    }
-
-    const sources = [...new Set(found.map(m => m.chunk.source))]
-    const context = found.map(m => `- ${m.chunk.text}`).join('\n')
-
-    if (!this.#llm) {
-      /* Без провайдера отдаём найденное как есть. Половина пользы RAG — именно в
-         поиске: человек видит нужный абзац, даже когда сформулировать ответ
-         некому. */
-      return { text: found[0].chunk.text, sources, grounded: true }
-    }
-    try {
-      const text = await this.#llm(PROMPT(context, question))
-      return { text: String(text).trim(), sources, grounded: true }
-    } catch {
-      return { text: found[0].chunk.text, sources, grounded: true }
-    }
+    // TODO Б3: поиск похожих кусков, подсказка из найденного, честный отказ.
+    // Ничего не нашли: отвечаем «не знаю» и к модели не идём. Без провайдера
+    // отдаём найденный фрагмент как есть. Ответ всегда с источниками.
+    return { text: '', sources: [], grounded: false }
   }
 }
