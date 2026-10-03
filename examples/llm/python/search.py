@@ -50,36 +50,17 @@ class QueryUnderstanding:
         self._cache = {}
 
     def understand(self, query):
-        if query in self._cache:
-            return self._cache[query]
-
-        filters = self._ask(query)
-        self._cache[query] = filters
-        return filters
-
-    def _ask(self, query):
-        if self._llm is None:
-            return SearchFilters.plain(query)
-        try:
-            return self._parse(self._llm(PROMPT.format(query=query)), query)
-        except Exception:
-            # Провайдер недоступен — ищем как есть. Ошибку покупателю не
-            # показываем: он спрашивал про мышь, а не про наш провайдер.
-            return SearchFilters.plain(query)
+        # TODO Б2: превратить фразу в фильтры.
+        # Три вещи обязательны, иначе это нельзя выпускать: одна и та же фраза не
+        # должна ходить к модели дважды; лежащий провайдер не должен ломать поиск;
+        # ответ модели разбирается оборонительно, она вернёт не то, что обещала,
+        # ровно тогда, когда этого не ждут.
+        return SearchFilters.plain(query)
 
     def _parse(self, answer, original):
-        """Обещание модели — не гарантия: она отвечает текстом, а не типом."""
-        try:
-            data = json.loads(answer.strip())
-            if not isinstance(data, dict):
-                return SearchFilters.plain(original)
-            text = data.get("text") or original
-            price = data.get("maxPrice")
-            return SearchFilters(str(text).strip() or original,
-                                 float(price) if isinstance(price, (int, float)) else None,
-                                 bool(data.get("inStockOnly")))
-        except Exception:
-            return SearchFilters.plain(original)
+        # TODO Б2: разбор ответа модели. Поля описаны в подсказке, но обещание
+        # модели не гарантия: она отвечает текстом, а не типом.
+        return SearchFilters.plain(original)
 
 
 def search(products, filters):
