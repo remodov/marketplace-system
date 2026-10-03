@@ -77,53 +77,20 @@ class AgentLoop:
         self._llm = llm
 
     def run(self, task, confirmed=False):
-        if self._llm is None:
-            return Result("Агент недоступен: не настроен провайдер модели.")
-
-        trace = []
-        observations = ""
-
-        for step in range(1, MAX_STEPS + 1):
-            try:
-                raw = self._llm(PROMPT.format(tools=self._tools.catalogue(),
-                                              task=task, observations=observations))
-            except Exception:
-                return Result("Модель недоступна, попробуйте позже.", list(trace))
-
-            decision = _parse(raw)
-            if decision is None:
-                # Модель ответила не JSON. Не падаем и не гадаем — говорим ей об
-                # этом наблюдением: следующий заход обычно получается.
-                trace.append("шаг %d: ответ не разобран, просим повторить" % step)
-                observations += "\nОтвет не разобран. Верни один JSON-объект."
-                continue
-
-            if decision.get("answer") is not None:
-                trace.append("шаг %d: ответ готов" % step)
-                return Result(str(decision["answer"]), list(trace))
-
-            name = decision.get("tool", "")
-            tool = self._tools.find(name)
-            if tool is None:
-                trace.append("шаг %d: инструмента «%s» нет" % (step, name))
-                observations += ("\nИнструмента «%s» не существует. "
-                                 "Доступны только перечисленные выше." % name)
-                continue
-
-            args = decision.get("args") or {}
-            if tool.mutating and not confirmed:
-                call = "%s %s" % (name, json.dumps(args, ensure_ascii=False))
-                trace.append("шаг %d: нужен человек — %s" % (step, call))
-                return Result("Нужно подтверждение: агент хочет выполнить " + call,
-                              list(trace), call)
-
-            observation = tool.run(args)
-            trace.append("шаг %d: %s → %s" % (step, name, observation.replace("\n", ";")))
-            observations += "\nРезультат %s: %s" % (name, observation)
-
-        # Шаги кончились. Честный отказ лучше последнего ответа модели: она к
-        # этому моменту уже ходит по кругу, и её «ответ» ничем не обоснован.
-        return Result("Не уложился в %d шагов. Передаю оператору." % MAX_STEPS, list(trace))
+        # TODO Б4: цикл агента.
+        # Шаг цикла: спросить модель подсказкой PROMPT (каталог инструментов, задача
+        # и накопленные наблюдения), разобрать ответ через _parse, сделать одно из четырёх.
+        #   {"answer": "..."}      вернуть ответ покупателю;
+        #   {"tool": "имя", ...}   найти инструмент в реестре и выполнить, результат
+        #                          дописать в наблюдения и пойти на следующий шаг;
+        #   инструмента нет        сказать об этом наблюдением, не падать;
+        #   ответ не JSON          попросить повторить, не гадать.
+        # Изменяющий инструмент (tool.mutating) без confirmed не выполняется:
+        # цикл останавливается и возвращает вызов в awaiting_confirm.
+        # Шагов не больше MAX_STEPS, и на исходе честный отказ, а не последний
+        # ответ модели: к этому моменту она уже ходит по кругу.
+        # Каждый шаг дописывать в trace: без него разбирать поведение агента нечем.
+        return Result("")
 
 
 def _parse(answer):
