@@ -20,12 +20,12 @@ Java, Python, Go и Node — берите свой язык.
 
 Java-версия живёт внутри настоящего сервиса каталога: там же есть боковые шаги с
 заданием — ветки `side-b2-llm-search`, `side-b3-rag-assistant` и
-`side-b4-agent-tools`, где реализация вынута, а тесты красные. Python и Go —
+`side-b4-agent-tools`, где реализация вынута, а тесты красные. Python, Go и Node —
 отдельные маленькие примеры с такими же заданиями: ветки
 `side-b2-llm-search-python`, `side-b3-rag-assistant-python`,
-`side-b4-agent-tools-python` и `side-b2-llm-search-go`, `side-b3-rag-assistant-go`,
-`side-b4-agent-tools-go`; условие в `TASK.md` рядом с кодом, решение в `main`.
-Node — пример, который читают и запускают.
+`side-b4-agent-tools-python`, `side-b2-llm-search-go`, `side-b3-rag-assistant-go`,
+`side-b4-agent-tools-go`, `side-b2-llm-search-node`, `side-b3-rag-assistant-node` и
+`side-b4-agent-tools-node`; условие в `TASK.md` рядом с кодом, решение в `main`.
 
 ## Что внутри, одинаково на всех языках
 
