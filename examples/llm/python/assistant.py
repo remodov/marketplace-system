@@ -47,21 +47,7 @@ class RagAssistant:
         self._llm = llm
 
     def ask(self, question):
-        found = self._base.search(question, TOP_K, MIN_SCORE)
-        if not found:
-            return Answer("Не нашёл ответа в документах магазина. "
-                          "Спросите оператора — он посмотрит вручную.", [], False)
-
-        sources = list(dict.fromkeys(m.chunk.source for m in found))
-        context = "\n".join("- " + m.chunk.text for m in found)
-
-        if self._llm is None:
-            # Без провайдера отдаём найденное как есть. Половина пользы RAG —
-            # именно в поиске: человек видит нужный абзац, даже когда
-            # сформулировать ответ некому.
-            return Answer(found[0].chunk.text, sources, True)
-        try:
-            text = self._llm(PROMPT.format(context=context, question=question))
-            return Answer(text.strip(), sources, True)
-        except Exception:
-            return Answer(found[0].chunk.text, sources, True)
+        # TODO Б3: поиск похожих кусков, подсказка из найденного, честный отказ.
+        # Ничего не нашли: отвечаем «не знаю» и к модели не идём. Без провайдера
+        # отдаём найденный фрагмент как есть. Ответ всегда с источниками.
+        return Answer("", [], False)

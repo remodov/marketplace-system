@@ -25,35 +25,11 @@ def split(text, max_chars, overlap):
     if overlap < 0 or overlap >= max_chars:
         raise ValueError("перекрытие должно быть меньше размера куска")
 
+    # TODO Б3: нарезка по границам предложений с перекрытием.
+    # Один кусок не длиннее max_chars, слова не рвутся, хвост предыдущего куска
+    # повторяется в начале следующего, предложение длиннее потолка режется по словам.
     clean = _SPACES.sub(" ", (text or "").strip())
-    if not clean:
-        return []
-
-    chunks = []
-    current = ""
-    for sentence in _sentences(clean):
-        if current and len(current) + 1 + len(sentence) > max_chars:
-            chunks.append(current)
-            # Перекрытие берём только в тот запас, что остался под само
-            # предложение: иначе хвост вместе с длинным предложением снова
-            # вылезет за потолок.
-            room = max_chars - len(sentence) - 1
-            current = _tail(current, min(overlap, room)) if room > 0 else ""
-
-        # Одно предложение длиннее потолка — режем по словам: выбрасывать его
-        # нельзя, а оставить целым не даёт окно модели.
-        while len(sentence) > max_chars:
-            cut = sentence.rfind(" ", 0, max_chars)
-            if cut <= 0:
-                cut = max_chars
-            chunks.append(sentence[:cut].strip())
-            sentence = _tail(sentence[:cut], overlap) + sentence[cut:]
-
-        current = (current + " " + sentence).strip() if current else sentence
-
-    if current:
-        chunks.append(current)
-    return [c.strip() for c in chunks if c.strip()]
+    return [clean] if clean else []
 
 
 def _sentences(text):
